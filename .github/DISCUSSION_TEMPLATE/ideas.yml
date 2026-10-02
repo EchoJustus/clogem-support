@@ -1,0 +1,41 @@
+# Copyright 2026 EchoJustus. Part of clogem-support.
+# SPDX-License-Identifier: MIT
+#
+# The form of the Ideas category of Discussions: the front page's "Share
+# feedback or an idea" opens it (site/site.edn, :feedback; README,
+# "Feedback"). The file is named for the category's slug.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for telling us. Everything here is public: leave out personal details, license keys and videos.
+        For something private, write to EchoJustus.Studio@outlook.com.
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app is it about?
+      options:
+        - Wmark Pro
+        - The support site
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your feedback or idea
+      description: What works for you, what doesn't, or what you would like next.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would it help you do?
+      description: The work you were doing when you thought of it. Optional, but it helps us weigh it.
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Before you post
+      options:
+        - label: I left out personal details, license keys and videos.
+          required: true

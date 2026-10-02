@@ -27,12 +27,15 @@ on:
     branches: [main]
     paths:
       - site/**
+      - icons/**
       - scripts/**
       - test/**
       - trailers/**
       - bb.edn
       - deps.edn
       - .github/workflows/portal.yml
+      - .github/DISCUSSION_TEMPLATE/**
+      - .github/ISSUE_TEMPLATE/**
   pull_request:
   page_build:
   workflow_dispatch:
