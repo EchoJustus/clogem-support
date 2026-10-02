@@ -94,7 +94,7 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
 
 | Trailer | |
 |---|---|
-| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 54 s, captions in 18 languages |
+| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 60 s, captions in 18 languages |
 
 ## License
 
