@@ -87,7 +87,7 @@
             (do (is (str/includes? index (str "href=\"" repo "\"")))
                 (is (str/includes? index (str "Open source · " license))))
             (is (str/includes? index (str/replace status "'" "&apos;")))))
-        (is (= (count projects) (count (re-seq #"<img [^>]*class=\"app-icon\" [^>]*src=\"data:image/svg\+xml;base64,"
+        (is (= (count projects) (count (re-seq #"<img [^>]*class=\"app-icon\" [^>]*src=\"data:image/(?:svg\+xml|png);base64,"
                                                (subs index (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"")))))
             "every project's icon, embedded")))
     (testing "open source first, then the commercial apps with the note about Pro editions to come"
@@ -228,7 +228,7 @@
                          "it needs a :repo (its source)" #(assoc-in % [:open-source :projects 0 :repo] "https://github.com/EchoJustus/clogem-hstry")
                          "its :repo must be a GitHub"    #(assoc-in % [:open-source :projects 1 :repo] "https://example.com/clogem-press")
                          "it names its :license"         #(update-in % [:open-source :projects 1] dissoc :license)
-                         "its :icon must be an .svg"     #(assoc-in % [:open-source :projects 2 :icon] "../../etc/passwd")
+                         "its :icon must be an .svg or"  #(assoc-in % [:open-source :projects 2 :icon] "../../etc/passwd")
                          "own :id"                       #(update-in % [:open-source :projects] (fn [ps] (conj ps (first ps))))
                          "at least one project"          #(assoc-in % [:open-source :projects] [])
                          ":business must be an email"    #(assoc % :business "someone")
@@ -247,11 +247,28 @@
         (is (str/includes? index "&lt;script&gt;alert(1)&lt;/script&gt; &amp; more"))
         (is (not (str/includes? index "<script")))))))
 
+(defn- png-bytes
+  "The first bytes of a PNG `w` by `h` (signature and IHDR), enough for the
+  check."
+  [w h]
+  (let [u32 (fn [n] [(bit-shift-right n 24) (bit-and (bit-shift-right n 16) 0xff) (bit-and (bit-shift-right n 8) 0xff) (bit-and n 0xff)])]
+    (byte-array (map unchecked-byte (concat [0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A 0 0 0 13 0x49 0x48 0x44 0x52]
+                                            (u32 w) (u32 h) [8 6 0 0 0])))))
+
 (deftest the-projects-icons-are-plain-drawings
-  (testing "each icon site.edn names is in icons/, a plain SVG that runs nothing and reaches nothing outside it"
+  (testing "each icon site.edn names is in icons/: a plain SVG that runs nothing and reaches nothing outside it, or a square PNG of at least 112 pixels"
     (doseq [{:keys [id icon]} (get-in site [:open-source :projects])]
-      (let [svg (slurp icon)]
-        (is (nil? (portal/icon-problem svg)) id))))
+      (if (str/ends-with? icon ".png")
+        (is (nil? (portal/png-problem (fs/read-all-bytes icon))) id)
+        (is (nil? (portal/icon-problem (slurp icon))) id))))
+  (testing "the redesigned icons (v3) are the PNGs, for clogem-hstry and clogem-press"
+    (is (= {"clogem-hstry" "icons/clogem-hstry.png" "clogem-press" "icons/clogem-press.png"}
+           (into {} (for [{:keys [id icon]} (get-in site [:open-source :projects]) :when (str/ends-with? icon ".png")] [id icon])))))
+  (testing "what makes a PNG unfit"
+    (is (nil? (portal/png-problem (png-bytes 128 128))))
+    (is (= "it isn't square" (portal/png-problem (png-bytes 128 96))))
+    (is (= "it is smaller than 112 pixels" (portal/png-problem (png-bytes 64 64))))
+    (is (= "it isn't a PNG" (portal/png-problem (.getBytes "<svg/>" "UTF-8")))))
   (testing "what makes an icon unsafe"
     (doseq [[what svg] {"a script"        "<svg><script>alert(1)</script></svg>"
                         "a handler"       "<svg onload=\"alert(1)\"></svg>"
@@ -421,8 +438,9 @@
             (str f)))))
   (testing "the projects' icons: each carries its own licence (icons/README.md)"
     (is (str/includes? (slurp "icons/clogem-wmark.svg") "SPDX-License-Identifier: EPL-2.0"))
-    (is (str/includes? (slurp "icons/clogem-press.svg") "EPL-2.0"))
-    (is (str/starts-with? (slurp "icons/clogem-hstry.svg") "<!-- Copyright 2026 EchoJustus. All rights reserved. -->"))
+    (let [readme (slurp "icons/README.md")]
+      (is (re-find #"`clogem-press\.png`[^\n]*EPL-2\.0" readme) "a PNG carries no header: the README states its licence")
+      (is (re-find #"`clogem-hstry\.png`[^\n]*all rights reserved" readme)))
     (is (str/starts-with? (slurp "icons/EPL-2.0.txt") "Eclipse Public License - v 2.0"))
     (is (str/starts-with? (slurp "icons/README.md") "<!-- Copyright 2026 EchoJustus. All rights reserved.")))
   (testing "the words: all rights reserved, outside the MIT license"
