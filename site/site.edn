@@ -1,4 +1,5 @@
-;; Copyright 2026 EchoJustus. Part of clogem-support.
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
 ;;
 ;; The words of the support hub's front page, and the apps it lists
 ;; (`bb portal`, scripts/portal.clj). The hub is the gh-pages branch of this

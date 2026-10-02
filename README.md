@@ -77,3 +77,13 @@ Open `_site/index.html` in a browser to look at it.
    line about it, and two colours from its icon for its card.
 
 It is listed once both are there, in either order.
+
+## License
+
+- **Code** (`scripts/`, `test/`, `.github/`, `bb.edn` and `.gitignore`):
+  MIT, see [LICENSE](LICENSE).
+- **Everything else:** © 2026 EchoJustus, all rights reserved. That covers
+  the words in `site/`, every page on the `gh-pages` branch (including the
+  apps' support pages and privacy policies), and the names, logos and icons
+  of Clogem and its apps. The MIT license doesn't cover any of it, and it
+  grants no right to use the names or icons.

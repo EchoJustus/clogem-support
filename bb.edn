@@ -1,4 +1,5 @@
 ;; Copyright 2026 EchoJustus. Part of clogem-support.
+;; SPDX-License-Identifier: MIT
 {:paths ["test"]
  :tasks
  {portal {:doc  "The hub's front page: index.html, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn)"
