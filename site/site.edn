@@ -10,8 +10,9 @@
  :lead  "Help, contact and privacy policies for Clogem apps, and the open-source projects they are built on."
 
  ;; The projects built in the open, in the order shown (the owner's,
- ;; 2026-10-02). Each icon is a file in icons/ (its README says where it
- ;; comes from); :accent is two colours from it, for the card's strip. A
+ ;; 2026-10-02). Each icon is a file in icons/, an SVG or a PNG of at least
+ ;; 112 pixels (its README says where it comes from); :accent is two
+ ;; colours from it, for the card's strip. A
  ;; project links to its source with :repo, or says :status while its
  ;; source isn't public.
  :open-source
@@ -22,15 +23,15 @@
     :name     "clogem-hstry"
     :subtitle "Chat history"
     :about    "A local-first tool for capturing, searching and analysing chat history."
-    :icon     "icons/clogem-hstry.svg"
-    :accent   ["#FFD640" "#D29A12"]
+    :icon     "icons/clogem-hstry.png"
+    :accent   ["#FFD978" "#E09A12"]
     :status   "In early development. Its source isn't public yet."}
    {:id       "clogem-press"
     :name     "clogem-press"
     :subtitle "Knowledge bases, blogs and docs"
     :about    "A site generator for knowledge bases, blogs and documentation, with content in up to five languages. It runs on Babashka, with no other dependencies."
-    :icon     "icons/clogem-press.svg"
-    :accent   ["#4FE8D2" "#1FB088"]
+    :icon     "icons/clogem-press.png"
+    :accent   ["#6BDDB7" "#0A7C5B"]
     :repo     "https://github.com/EchoJustus/clogem-press"
     :license  "EPL-2.0"}
    {:id       "clogem-wmark"

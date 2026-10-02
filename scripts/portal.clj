@@ -65,8 +65,8 @@
                     "its :id must be one lowercase name")
                   (when-not (every? text? [name subtitle about])
                     "it needs :name, :subtitle and :about")
-                  (when-not (and (string? icon) (re-matches #"icons/[a-z0-9-]+\.svg" icon))
-                    "its :icon must be an .svg file in icons/")
+                  (when-not (and (string? icon) (re-matches #"icons/[a-z0-9-]+\.(svg|png)" icon))
+                    "its :icon must be an .svg or .png file in icons/")
                   (when-not (colours? accent)
                     "its :accent must be two colours like #7A63DC")
                   (when-not (= 1 (count (remove nil? [repo status])))
@@ -195,16 +195,36 @@
         (re-find #"(?i)href\s*=\s*[\"'](?!#)" svg)          "it links outside itself"
         (re-find #"(?i)url\(\s*[\"']?(?!#)" svg)            "it refers to something outside itself"))
 
+(def ^:private png-signature [0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A])
+
+(defn png-problem
+  "Why a PNG icon can't go on the page, or nil: it must be a PNG, square,
+  and at least 112 pixels (twice the card's 56, so it stays sharp on
+  high-density screens). Its size is read from the IHDR chunk."
+  [^bytes b]
+  (let [u8  (fn [i] (bit-and (aget b (int i)) 0xff))
+        u32 (fn [i] (reduce (fn [acc k] (+ (* acc 256) (u8 (+ i k)))) 0 (range 4)))]
+    (cond (or (< (alength b) 24) (not= png-signature (map u8 (range 8)))) "it isn't a PNG"
+          (not= (u32 16) (u32 20))                                       "it isn't square"
+          (< (u32 16) 112)                                                "it is smaller than 112 pixels")))
+
 (defn project-icons
   "The projects, each with its icon as a data: URI (:icon-uri), read from
-  `root` (this repository); fails when one is missing or unsafe."
+  `root` (this repository): an SVG checked to be a plain drawing, or a PNG
+  checked to be square and large enough. Fails when one is missing or
+  unfit."
   [projects root]
   (vec (for [{:keys [id icon] :as project} projects]
-         (let [f (fs/file root icon)]
+         (let [f    (fs/file root icon)
+               bad! #(fail! (str "project " id ": its icon " icon ": " %))]
            (when-not (fs/exists? f) (fail! (str "project " id ": its icon " icon " isn't there")))
-           (let [svg (slurp f)]
-             (when-let [problem (icon-problem svg)] (fail! (str "project " id ": its icon " icon ": " problem)))
-             (assoc project :icon-uri (data-uri svg)))))))
+           (if (str/ends-with? icon ".png")
+             (let [b (fs/read-all-bytes f)]
+               (some-> (png-problem b) bad!)
+               (assoc project :icon-uri (str "data:image/png;base64," (.encodeToString (Base64/getEncoder) ^bytes b))))
+             (let [svg (slurp f)]
+               (some-> (icon-problem svg) bad!)
+               (assoc project :icon-uri (data-uri svg))))))))
 
 (def ^:private bag
   "A shopping bag, our own drawing, for the store button (no store's logo:
