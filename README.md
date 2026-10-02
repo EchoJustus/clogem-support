@@ -78,12 +78,35 @@ Open `_site/index.html` in a browser to look at it.
 
 It is listed once both are there, in either order.
 
+## Store trailers
+
+`trailers/<app>/` holds an app's Microsoft Store trailer: the video, its
+thumbnail, closed captions in every listing language, and everything it
+was made from. The toolchain is Babashka and Clojure over FFmpeg
+(`scripts/trailer/`):
+
+```
+bb trailer-footage                  # the open footage, pinned by SHA-256
+bb trailer [--quality store]        # cut, music, captions, thumbnail, and the Store's checks
+clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out target/take.mkv
+                                    # record an app on an X display, driven like a person would
+```
+
+| Trailer | |
+|---|---|
+| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 54 s, captions in 18 languages |
+
 ## License
 
-- **Code** (`scripts/`, `test/`, `.github/`, `bb.edn` and `.gitignore`):
-  MIT, see [LICENSE](LICENSE).
+- **Code** (`scripts/`, `test/`, `.github/`, `bb.edn`, `deps.edn` and
+  `.gitignore`): MIT, see [LICENSE](LICENSE).
+- **Third-party parts** keep their own licences: the open films' footage
+  in `trailers/` is © Blender Foundation under CC BY 3.0, and the fonts in
+  `trailers/*/sources/fonts/` are under the SIL Open Font License 1.1
+  (each trailer's README credits them).
 - **Everything else:** © 2026 EchoJustus, all rights reserved. That covers
   the words in `site/`, every page on the `gh-pages` branch (including the
-  apps' support pages and privacy policies), and the names, logos and icons
+  apps' support pages and privacy policies), the trailers in `trailers/`
+  (videos, captions, words, recordings), and the names, logos and icons
   of Clogem and its apps. The MIT license doesn't cover any of it, and it
   grants no right to use the names or icons.

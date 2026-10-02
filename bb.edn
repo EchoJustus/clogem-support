@@ -1,10 +1,16 @@
 ;; Copyright 2026 EchoJustus. Part of clogem-support.
 ;; SPDX-License-Identifier: MIT
-{:paths ["test"]
+{:paths ["scripts" "test"]
  :tasks
  {portal {:doc  "The hub's front page: index.html, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn)"
           :task (apply shell "bb" "scripts/portal.clj" *command-line-args*)}
-  test   {:doc      "The front page's rules and the publishing workflow's, run against a local stand-in for gh-pages (test/portal_test.clj)"
-          :requires ([clojure.test :as t] [portal-test])
-          :task     (let [{:keys [fail error]} (t/run-tests 'portal-test)]
+  trailer {:doc      "A Store trailer: bb trailer --sources DIR [--trailer trailers/wmark-pro] [--quality repo|store] (scripts/trailer/main.clj; trailers/wmark-pro/README.md)"
+           :requires ([trailer.main])
+           :task     (apply trailer.main/-main *command-line-args*)}
+  trailer-footage {:doc      "The clips a take watermarks, from pinned open footage (trailers/wmark-pro/footage.edn) -> target/footage/clips (scripts/trailer/footage.clj)"
+                   :requires ([trailer.footage])
+                   :task     (apply trailer.footage/-main *command-line-args*)}
+  test   {:doc      "The front page's rules and the publishing workflow's, run against a local stand-in for gh-pages (test/portal_test.clj); the trailer toolchain, and the Wmark Pro trailer against the Store's rules (test/trailer_test.clj; its video checks need ffmpeg)"
+          :requires ([clojure.test :as t] [portal-test] [trailer-test])
+          :task     (let [{:keys [fail error]} (t/run-tests 'portal-test 'trailer-test)]
                       (when (pos? (+ fail error)) (System/exit 1)))}}}

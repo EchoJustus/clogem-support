@@ -1,0 +1,306 @@
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
+;;
+;; Every word of the Wmark Pro trailer: the English on screen
+;; (trailer.edit) and the closed captions in the eighteen languages of the
+;; app's Store listing (trailer.captions), with the listing's own terms.
+;; Like the listing, the translations wait for native speakers' review.
+;; A line break (\n) splits a long caption; no line may pass 50 characters.
+{:title  "Wmark Pro: Video Watermarker, trailer"
+ :notice "Copyright 2026 EchoJustus. All rights reserved."
+ :languages ["en" "fr" "zh-Hans" "zh-Hant" "ru" "ja" "ko" "ar"
+             "ta" "sv" "ms" "fi" "hi" "es" "pt" "de" "id" "it"]
+
+ ;; sounds, captioned in brackets: [segment, from, until], a negative time
+ ;; counting from the segment's end
+ :sounds [{:word :music      :segment :open :from 0.0  :until 1.9}
+          {:word :music-ends :segment :end  :from -2.0 :until -0.05}]
+ ;; the end card's words, captioned while it shows
+ :end-cards [{:segment :end :from 0.3 :until -2.0 :words [:try :honest]}]
+
+ :words
+ {;; on screen only, never translated: the product's name and the credits
+  :name      {"en" "Wmark Pro"}
+  :tagline   {"en" "Video Watermarker"}
+  :credits   {"en" "Footage: Sintel and Big Buck Bunny, © Blender Foundation (sintel.org, bigbuckbunny.org), CC BY 3.0, watermarked for this demo."}
+  :credits-2 {"en" "Not affiliated with or endorsed by the Blender Foundation. Music made for this trailer."}
+
+  :music
+  {"en" "[Calm electronic music]"
+   "fr" "[Musique électronique calme]"
+   "zh-Hans" "[舒缓的电子音乐]"
+   "zh-Hant" "[舒緩的電子音樂]"
+   "ru" "[Спокойная электронная музыка]"
+   "ja" "[穏やかな電子音楽]"
+   "ko" "[잔잔한 전자 음악]"
+   "ar" "[موسيقى إلكترونية هادئة]"
+   "ta" "[அமைதியான மின்னணு இசை]"
+   "sv" "[Lugn elektronisk musik]"
+   "ms" "[Muzik elektronik yang tenang]"
+   "fi" "[Rauhallista elektronista musiikkia]"
+   "hi" "[शांत इलेक्ट्रॉनिक संगीत]"
+   "es" "[Música electrónica tranquila]"
+   "pt" "[Música eletrônica tranquila]"
+   "de" "[Ruhige elektronische Musik]"
+   "id" "[Musik elektronik yang tenang]"
+   "it" "[Musica elettronica rilassante]"}
+
+  :open
+  {"en" "Make AI watermark removal harder"
+   "fr" "Rendez plus difficile la suppression\ndes filigranes par l'IA"
+   "zh-Hans" "让 AI 更难去除水印"
+   "zh-Hant" "讓 AI 更難去除浮水印"
+   "ru" "Чтобы ИИ было труднее\nудалить водяные знаки"
+   "ja" "AI による透かしの除去を難しく"
+   "ko" "AI로 워터마크를 지우기 어렵게"
+   "ar" "اجعل إزالة العلامات المائية\nبالذكاء الاصطناعي أصعب"
+   "ta" "AI மூலம் நீர்க்குறியை அகற்றுவதைக்\nகடினமாக்குங்கள்"
+   "sv" "Gör det svårare att ta bort\nvattenstämplar med AI"
+   "ms" "Sukarkan pembuangan tera air oleh AI"
+   "fi" "Vaikeuta vesileimojen poistamista\ntekoälyllä"
+   "hi" "AI से वॉटरमार्क हटाना और मुश्किल बनाएँ"
+   "es" "Haz más difícil quitar\nmarcas de agua con IA"
+   "pt" "Dificulte a remoção de marcas d'água por IA"
+   "de" "Damit KI Wasserzeichen\nschwerer entfernen kann"
+   "id" "Buat penghapusan tanda air oleh AI\nlebih sulit"
+   "it" "Rendi più difficile rimuovere\nle filigrane con l'IA"}
+
+  :batch
+  {"en" "Watermark whole batches of videos"
+   "fr" "Filigranez des lots entiers de vidéos"
+   "zh-Hans" "批量为视频添加水印"
+   "zh-Hant" "批次為影片加上浮水印"
+   "ru" "Водяные знаки на целых пакетах видео"
+   "ja" "動画をまとめて透かし入れ"
+   "ko" "여러 동영상에 한꺼번에 워터마크"
+   "ar" "علامات مائية لدفعات كاملة من الفيديوهات"
+   "ta" "வீடியோக்களின் முழுத் தொகுப்புகளுக்கும்\nநீர்க்குறி"
+   "sv" "Vattenstämpla hela omgångar av videor"
+   "ms" "Tera air seluruh kumpulan video"
+   "fi" "Vesileimat kokonaisiin videoeriin"
+   "hi" "वीडियो के पूरे बैच पर वॉटरमार्क"
+   "es" "Marcas de agua en lotes enteros de vídeos"
+   "pt" "Marcas d'água em lotes inteiros de vídeos"
+   "de" "Ganze Stapel von Videos\nmit Wasserzeichen versehen"
+   "id" "Beri tanda air pada seluruh kumpulan video"
+   "it" "Filigrana interi lotti di video"}
+
+  :flip
+  {"en" "A logo that flips in 3D"
+   "fr" "Un logo qui pivote en 3D"
+   "zh-Hans" "3D 翻转的 Logo"
+   "zh-Hant" "3D 翻轉的 Logo"
+   "ru" "Логотип, который переворачивается в 3D"
+   "ja" "3D で回転するロゴ"
+   "ko" "3D로 뒤집히는 로고"
+   "ar" "شعار ينقلب بالأبعاد الثلاثية"
+   "ta" "3D-இல் புரளும் லோகோ"
+   "sv" "En logotyp som vänder sig i 3D"
+   "ms" "Logo yang berpusing dalam 3D"
+   "fi" "3D:nä kääntyvä logo"
+   "hi" "3D में पलटने वाला लोगो"
+   "es" "Un logotipo que gira en 3D"
+   "pt" "Um logotipo que gira em 3D"
+   "de" "Ein Logo, das sich in 3D dreht"
+   "id" "Logo yang berputar dalam 3D"
+   "it" "Un logo che ruota in 3D"}
+
+  :flip-sub
+  {"en" "so a fixed box can't simply erase it"
+   "fr" "pour qu'une zone fixe ne puisse pas\nsimplement l'effacer"
+   "zh-Hans" "固定框无法轻易抹除"
+   "zh-Hant" "固定框無法輕易抹除"
+   "ru" "чтобы неподвижная рамка\nне могла просто его стереть"
+   "ja" "固定の枠では簡単に消せません"
+   "ko" "고정된 영역만으로는 쉽게 지울 수 없음"
+   "ar" "فلا يمحوه إطار ثابت بسهولة"
+   "ta" "நிலையான பெட்டியால் எளிதில்\nஅழிக்க முடியாது"
+   "sv" "så att en fast ruta inte bara\nkan sudda ut den"
+   "ms" "supaya kotak tetap tidak mudah\nmemadamkannya"
+   "fi" "jota kiinteä alue ei voi\nvain pyyhkiä pois"
+   "hi" "जिसे स्थिर बॉक्स आसानी से नहीं मिटा सकता"
+   "es" "para que un recuadro fijo\nno pueda borrarlo sin más"
+   "pt" "para que uma área fixa não consiga\nsimplesmente apagá-lo"
+   "de" "damit ein fester Bereich es\nnicht einfach entfernen kann"
+   "id" "sehingga kotak tetap tidak bisa\nbegitu saja menghapusnya"
+   "it" "così un riquadro fisso\nnon basta a cancellarlo"}
+
+  :text
+  {"en" "Warning text, in your own words"
+   "fr" "Un texte d'avertissement, avec vos mots"
+   "zh-Hans" "警示文字，用您自己的话"
+   "zh-Hant" "警示文字，用您自己的話"
+   "ru" "Предупреждающий текст — вашими словами"
+   "ja" "警告文は、あなたの言葉で"
+   "ko" "경고 문구는 원하는 대로"
+   "ar" "نص تحذيري بكلماتك أنت"
+   "ta" "எச்சரிக்கை உரை, உங்கள் சொந்த\nவார்த்தைகளில்"
+   "sv" "Varningstext med dina egna ord"
+   "ms" "Teks amaran, dengan kata-kata anda sendiri"
+   "fi" "Varoitusteksti omin sanoin"
+   "hi" "चेतावनी टेक्स्ट, आपके अपने शब्दों में"
+   "es" "Texto de advertencia, con tus palabras"
+   "pt" "Texto de aviso, com as suas palavras"
+   "de" "Warntext in Ihren eigenen Worten"
+   "id" "Teks peringatan, dengan kata-kata Anda"
+   "it" "Testo di avviso, con le tue parole"}
+
+  :canary
+  {"en" "Canary frames, keyed to each video"
+   "fr" "Images canari propres à chaque vidéo,\npar clé"
+   "zh-Hans" "由密钥针对每个视频生成的金丝雀帧"
+   "zh-Hant" "由金鑰針對每部影片產生的金絲雀影格"
+   "ru" "Кадры-канарейки, заданные ключом\nдля каждого видео"
+   "ja" "動画ごとにキーで決まるカナリアフレーム"
+   "ko" "동영상마다 키로 정해지는 카나리 프레임"
+   "ar" "إطارات كناري يحددها مفتاح خاص بكل فيديو"
+   "ta" "ஒவ்வொரு வீடியோவுக்கும் சாவியால் அமையும்\nகேனரி சட்டகங்கள்"
+   "sv" "Kanarierutor som nyckeln bestämmer\nför varje video"
+   "ms" "Bingkai kanari yang ditentukan oleh kunci\nbagi setiap video"
+   "fi" "Kanarialintukuvat, jotka avain määrää\nkullekin videolle"
+   "hi" "हर वीडियो के लिए कुंजी से तय कैनरी फ़्रेम"
+   "es" "Fotogramas canario que una clave\ndetermina para cada vídeo"
+   "pt" "Quadros canário definidos por uma chave\npara cada vídeo"
+   "de" "Canary-Bilder, die ein Schlüssel\nfür jedes Video festlegt"
+   "id" "Bingkai kanari, ditentukan kunci\nuntuk setiap video"
+   "it" "Fotogrammi canary, determinati\nda una chiave per ogni video"}
+
+  :canary-sub
+  {"en" "Evidence that a copy came from you"
+   "fr" "La preuve qu'une copie vient de vous"
+   "zh-Hans" "证明副本出自您手的证据"
+   "zh-Hant" "證明副本出自您手的證據"
+   "ru" "Доказательство того,\nчто копия пошла от вас"
+   "ja" "コピーの出どころがあなたである証拠に"
+   "ko" "사본의 출처가 나임을 보여 주는 증거"
+   "ar" "دليل على أن النسخة صادرة عنك"
+   "ta" "நகல் உங்களிடமிருந்து வந்தது\nஎன்பதற்கான சான்று"
+   "sv" "Bevis för att en kopia kom från dig"
+   "ms" "Bukti bahawa salinan itu datang\ndaripada anda"
+   "fi" "Todiste siitä, että kopio on\nperäisin sinulta"
+   "hi" "इस बात का सबूत कि कॉपी आपसे आई है"
+   "es" "Una prueba de que una copia salió de ti"
+   "pt" "Uma prova de que a cópia saiu de você"
+   "de" "Ein Beleg dafür, dass eine Kopie\nvon Ihnen stammt"
+   "id" "Bukti bahwa salinan berasal dari Anda"
+   "it" "La prova che una copia viene da te"}
+
+  :render
+  {"en" "Render the whole batch"
+   "fr" "Exportez tout le lot"
+   "zh-Hans" "导出整批视频"
+   "zh-Hant" "匯出整批影片"
+   "ru" "Экспорт всего пакета"
+   "ja" "まとめて書き出し"
+   "ko" "한꺼번에 내보내기"
+   "ar" "صدّر الدفعة كاملة"
+   "ta" "முழுத் தொகுப்பையும் ஏற்றுமதி செய்யுங்கள்"
+   "sv" "Exportera hela omgången"
+   "ms" "Eksport seluruh kumpulan"
+   "fi" "Vie koko erä"
+   "hi" "पूरा बैच एक्सपोर्ट करें"
+   "es" "Exporta todo el lote"
+   "pt" "Exporte o lote inteiro"
+   "de" "Den ganzen Stapel exportieren"
+   "id" "Ekspor seluruh kumpulan"
+   "it" "Esporta l'intero lotto"}
+
+  :render-sub
+  {"en" "Everything renders on your PC"
+   "fr" "Tout est traité sur votre PC"
+   "zh-Hans" "所有处理都在您的电脑上完成"
+   "zh-Hant" "所有處理都在您的電腦上完成"
+   "ru" "Всё обрабатывается на вашем ПК"
+   "ja" "処理はすべてお使いの PC 上で"
+   "ko" "모든 처리는 내 PC에서"
+   "ar" "تتم المعالجة كلها على حاسوبك"
+   "ta" "எல்லாச் செயலாக்கமும் உங்கள் கணினியிலேயே"
+   "sv" "Allt bearbetas på din dator"
+   "ms" "Semuanya diproses pada PC anda"
+   "fi" "Kaikki käsitellään omalla tietokoneellasi"
+   "hi" "सारी प्रोसेसिंग आपके PC पर"
+   "es" "Todo se procesa en tu PC"
+   "pt" "Tudo é processado no seu PC"
+   "de" "Alles wird auf Ihrem PC verarbeitet"
+   "id" "Semuanya diproses di PC Anda"
+   "it" "Tutto viene elaborato sul tuo PC"}
+
+  :timing
+  {"en" "Every video gets its own timing"
+   "fr" "Chaque vidéo a son propre minutage"
+   "zh-Hans" "每个视频的时机都不同"
+   "zh-Hant" "每部影片的時機都不同"
+   "ru" "У каждого видео своё расписание"
+   "ja" "タイミングは動画ごとに異なります"
+   "ko" "동영상마다 시점이 모두 다름"
+   "ar" "لكل فيديو توقيته الخاص"
+   "ta" "ஒவ்வொரு வீடியோவுக்கும் தனி நேர அமைப்பு"
+   "sv" "Varje video får sin egen tidsplan"
+   "ms" "Setiap video mendapat masanya sendiri"
+   "fi" "Jokaisella videolla on oma ajoituksensa"
+   "hi" "हर वीडियो का अपना समय"
+   "es" "Cada vídeo tiene sus propios tiempos"
+   "pt" "Cada vídeo ganha seus próprios tempos"
+   "de" "Jedes Video bekommt sein eigenes Timing"
+   "id" "Setiap video mendapat waktunya sendiri"
+   "it" "Ogni video ha i suoi tempi"}
+
+  :try
+  {"en" "Try three renders free"
+   "fr" "Essayez trois exports gratuits"
+   "zh-Hans" "免费试用 3 次导出"
+   "zh-Hant" "免費試用 3 次匯出"
+   "ru" "Три экспорта бесплатно"
+   "ja" "3 回まで無料でお試し"
+   "ko" "세 번 무료로 내보내 보세요"
+   "ar" "جرّب ثلاث عمليات تصدير مجانًا"
+   "ta" "மூன்று ஏற்றுமதிகளை இலவசமாக முயலுங்கள்"
+   "sv" "Prova tre exporter gratis"
+   "ms" "Cuba tiga eksport secara percuma"
+   "fi" "Kokeile kolmea vientiä ilmaiseksi"
+   "hi" "तीन एक्सपोर्ट मुफ़्त में आज़माएँ"
+   "es" "Prueba tres exportaciones gratis"
+   "pt" "Experimente três exportações grátis"
+   "de" "Drei Exporte kostenlos testen"
+   "id" "Coba tiga ekspor gratis"
+   "it" "Prova tre esportazioni gratis"}
+
+  :honest
+  {"en" "Visible marks raise the cost of removal;\nno watermark makes it impossible."
+   "fr" "Les marques visibles rendent leur suppression\nplus coûteuse ; aucun filigrane ne la rend\nimpossible."
+   "zh-Hans" "可见标记会提高去除的成本，\n但没有任何水印能让去除变得不可能。"
+   "zh-Hant" "可見標記會提高去除的成本，\n但沒有任何浮水印能讓去除變得不可能。"
+   "ru" "Видимые знаки делают удаление дороже;\nни один водяной знак не делает\nего невозможным."
+   "ja" "目に見える透かしは除去の手間を増やしますが、\n除去を不可能にする透かしはありません。"
+   "ko" "눈에 보이는 표시는 제거 비용을 높일 뿐,\n제거를 불가능하게 만드는 워터마크는\n없습니다."
+   "ar" "العلامات المرئية ترفع كلفة إزالتها،\nولا توجد علامة مائية تجعل إزالتها مستحيلة."
+   "ta" "கண்ணுக்குத் தெரியும் குறிகள் அகற்றும்\nசெலவை அதிகரிக்கின்றன; எந்த நீர்க்குறியும்\nஅகற்றுவதைச் சாத்தியமற்றதாக்காது."
+   "sv" "Synliga märken gör det dyrare att ta bort\ndem; ingen vattenstämpel gör det omöjligt."
+   "ms" "Tanda yang kelihatan menaikkan kos untuk\nmembuangnya; tiada tera air yang\nmenjadikannya mustahil."
+   "fi" "Näkyvät merkit nostavat poistamisen\nhintaa; mikään vesileima ei tee\npoistamisesta mahdotonta."
+   "hi" "दिखने वाले निशान उन्हें हटाने की लागत बढ़ाते हैं;\nकोई भी वॉटरमार्क हटाना असंभव नहीं बनाता."
+   "es" "Las marcas visibles encarecen su eliminación;\nninguna marca de agua la hace imposible."
+   "pt" "Marcas visíveis tornam a remoção mais\ncustosa; nenhuma marca d'água a torna\nimpossível."
+   "de" "Sichtbare Zeichen machen das Entfernen\naufwendiger; kein Wasserzeichen macht es\nunmöglich."
+   "id" "Tanda yang terlihat menaikkan biaya penghapusan;\ntidak ada tanda air yang membuatnya mustahil."
+   "it" "I segni visibili rendono la rimozione più costosa;\nnessuna filigrana la rende impossibile."}
+
+  :music-ends
+  {"en" "[Music fades out]"
+   "fr" "[La musique s'estompe]"
+   "zh-Hans" "[音乐渐弱]"
+   "zh-Hant" "[音樂漸弱]"
+   "ru" "[Музыка затихает]"
+   "ja" "[音楽がフェードアウト]"
+   "ko" "[음악이 잦아듦]"
+   "ar" "[الموسيقى تتلاشى]"
+   "ta" "[இசை மெல்ல மறைகிறது]"
+   "sv" "[Musiken tonar ut]"
+   "ms" "[Muzik semakin perlahan]"
+   "fi" "[Musiikki hiljenee]"
+   "hi" "[संगीत धीमा होकर थमता है]"
+   "es" "[La música se desvanece]"
+   "pt" "[A música vai sumindo]"
+   "de" "[Die Musik klingt aus]"
+   "id" "[Musik memudar]"
+   "it" "[La musica sfuma]"}}}

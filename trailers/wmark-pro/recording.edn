@@ -1,0 +1,50 @@
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
+;;
+;; The take behind the Wmark Pro trailer (trailer.record): the app on a
+;; 1920x1080 display, its "Studio release" profile already saved (a logo
+;; that flips every three seconds, warning text that says "Sample" until the
+;; take types it in, a gold canary in the centre), three clips in ~/Videos
+;; and the logo in ~/Pictures. Coordinates are the app's at that
+;; size. The file dialog is the operating system's: the edit cuts it.
+{:window "(?i)wmark"
+ :size   [1920 1080]
+ :fps    30
+ :steps
+ [[:mark :start]
+  [:move 900 450 600] [:wait 2200]
+  ;; a batch of three videos
+  [:mark :add-videos]
+  [:click 155 742] [:wait 1300]
+  [:click 468 189] [:wait 900]
+  [:double 615 239] [:wait 1200]
+  [:click 700 214] [:wait 250]
+  [:shift-click 700 264] [:wait 400]
+  [:click 1447 928]
+  [:mark :videos-added]
+  [:move 620 520 700] [:wait 2600]
+  ;; the dragon on the stage
+  [:mark :pick]
+  [:click 132 887] [:wait 2600]
+  ;; scrub: the logo flips, keyed to the video
+  [:mark :scrub]
+  [:drag 44 628 1250 628 7000] [:wait 1800]
+  ;; warning text, typed in
+  [:mark :text]
+  [:click 710 742] [:wait 1200]
+  [:keys "Control_L" "a"] [:wait 300]
+  [:type "Watermarked sample, not for reuse"] [:wait 600]
+  [:click 1126 596]
+  [:mark :text-applied]
+  [:move 760 430 800] [:wait 3200]
+  [:shot "text"]
+  ;; render the batch
+  [:mark :render]
+  [:click 1368 1028] [:wait 1500]
+  [:scroll 700 700 :down 6] [:wait 1500]
+  [:mark :rendering]
+  [:wait 34000]
+  [:shot "rendered"]
+  [:mark :rendered]
+  [:wait 2500]
+  [:mark :end]]}
