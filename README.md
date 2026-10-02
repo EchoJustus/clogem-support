@@ -57,6 +57,9 @@ Three parts, in this order (owner, 2026-10-02):
    form (below, "Feedback"), and the business address for what shouldn't
    be public.
 
+Each section opens with its heading alone, with no overline repeating it
+(owner, 2026-10-02).
+
 - `site/site.edn`: its words, the projects and apps it lists, in order,
   the store links and the feedback channels.
 - `icons/`: the open-source projects' icons, copied from the clogem icon
@@ -74,7 +77,11 @@ Three parts, in this order (owner, 2026-10-02):
   - no JavaScript, no cookies, nothing loaded from another site;
   - a Content-Security-Policy that allows only the page's own style (by its
     SHA-256) and `data:` images;
-  - light and dark, after the visitor's system setting.
+  - light and dark, after the visitor's system setting, or as chosen in
+    the header's switcher (Auto, Light, Dark). The switcher is three radio
+    buttons the stylesheet reads with `:has()`, so it needs no script; with
+    no script and no cookie the choice isn't remembered, and each page
+    opens on Auto.
 
 ```
 bb portal --site-dir pages   # _site/ from a checkout of gh-pages in pages/

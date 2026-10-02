@@ -216,27 +216,47 @@
 ;; ---------------------------------------------------------------------------
 ;; The styles
 
+(def ^:private light
+  (str "--bg:#F4F6F9;--glow-1:rgba(79,128,227,.16);--glow-2:rgba(124,98,226,.12);"
+       "--surface:#FFFFFF;--surface-2:#EEF1F6;--border:rgba(20,28,45,.11);"
+       "--text:#141922;--muted:#525C70;--heading:#0D1220;--link:#2456B0;"
+       "--chip:#E8EEFB;--chip-ink:#1D4C9E;--focus:#2F6FE4;"
+       "--store:#141922;--store-ink:#FFFFFF;--store-hover:#2A3346;"
+       "--shadow:0 1px 2px rgba(13,18,32,.05),0 18px 40px -24px rgba(36,86,176,.32)"))
+
+(def ^:private dark
+  (str "--bg:#0D1016;--glow-1:rgba(79,128,227,.20);--glow-2:rgba(124,98,226,.18);"
+       "--surface:#151A23;--surface-2:#1A202B;--border:rgba(160,175,205,.15);"
+       "--text:#E9EDF4;--muted:#A2ABBC;--heading:#F5F7FB;--link:#9FBBFF;"
+       "--chip:rgba(159,187,255,.12);--chip-ink:#B9CCFF;--focus:#9FBBFF;"
+       "--store:#F5F7FB;--store-ink:#0D1220;--store-hover:#DCE4F5;"
+       "--shadow:0 1px 2px rgba(0,0,0,.35),0 24px 48px -24px rgba(0,0,0,.65)"))
+
+(def ^:private colour-tokens
+  "The tokens that fade when the theme changes: registered as colours, so
+  the page's glows fade with everything else."
+  ["--bg" "--glow-1" "--glow-2" "--surface" "--surface-2" "--border" "--text" "--muted"
+   "--heading" "--link" "--chip" "--chip-ink" "--focus" "--store" "--store-ink" "--store-hover"])
+
 (defn css
   "The page's styles, one accent rule per app and project (inline style
-  attributes would need the CSP to allow them)."
+  attributes would need the CSP to allow them).
+
+  The theme follows the system, or the switcher in the header: three radio
+  buttons, read by :has() on the root, so it takes no script. Without a
+  script or a cookie the choice isn't remembered: each page opens on
+  Auto."
   [apps projects]
   (str/join
    "\n"
    (concat
-    [":root{color-scheme:light dark;"
-     "--bg:#F4F6F9;--glow-1:rgba(79,128,227,.16);--glow-2:rgba(124,98,226,.12);"
-     "--surface:#FFFFFF;--surface-2:#EEF1F6;--border:rgba(20,28,45,.11);"
-     "--text:#141922;--muted:#525C70;--heading:#0D1220;--link:#2456B0;"
-     "--chip:#E8EEFB;--chip-ink:#1D4C9E;--focus:#2F6FE4;"
-     "--store:#141922;--store-ink:#FFFFFF;--store-hover:#2A3346;"
-     "--shadow:0 1px 2px rgba(13,18,32,.05),0 18px 40px -24px rgba(36,86,176,.32)}"
-     "@media (prefers-color-scheme:dark){:root{"
-     "--bg:#0D1016;--glow-1:rgba(79,128,227,.20);--glow-2:rgba(124,98,226,.18);"
-     "--surface:#151A23;--surface-2:#1A202B;--border:rgba(160,175,205,.15);"
-     "--text:#E9EDF4;--muted:#A2ABBC;--heading:#F5F7FB;--link:#9FBBFF;"
-     "--chip:rgba(159,187,255,.12);--chip-ink:#B9CCFF;--focus:#9FBBFF;"
-     "--store:#F5F7FB;--store-ink:#0D1220;--store-hover:#DCE4F5;"
-     "--shadow:0 1px 2px rgba(0,0,0,.35),0 24px 48px -24px rgba(0,0,0,.65)}}"
+    (for [t colour-tokens]
+      (str "@property " t "{syntax:\"<color>\";inherits:true;initial-value:transparent}"))
+    [(str ":root{color-scheme:light dark;" light ";"
+          "transition:" (str/join "," (map #(str % " .35s ease") colour-tokens)) "}")
+     (str "@media (prefers-color-scheme:dark){:root:not(:has(#theme-light:checked)){color-scheme:dark;" dark "}}")
+     (str ":root:has(#theme-dark:checked){color-scheme:dark;" dark "}")
+     ":root:has(#theme-light:checked){color-scheme:light}"
      (str "*,*::before{box-sizing:border-box}"
           "html{-webkit-text-size-adjust:100%;text-size-adjust:100%}")
      (str "body{margin:0;min-height:100vh;color:var(--text);background:"
@@ -250,6 +270,19 @@
      "h1,h2,h3{font-family:\"Segoe UI Variable Display\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:var(--heading)}"
      ;; the header
      ".hero{display:grid;gap:1.4rem}"
+     ".top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem 1.5rem}"
+     ;; the theme switcher: radios as a segmented control
+     (str ".theme{display:inline-flex;gap:2px;min-width:0;margin:0;padding:3px;border:1px solid var(--border);"
+          "border-radius:999px;background:var(--surface);box-shadow:var(--shadow)}")
+     ".theme legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}"
+     ".theme input{position:absolute;width:1px;height:1px;margin:0;opacity:0}"
+     (str ".theme label{display:inline-flex;align-items:center;gap:.4rem;padding:.42rem .85rem;border-radius:999px;"
+          "font-size:.86rem;font-weight:650;color:var(--muted);cursor:pointer;transition:background-color .2s ease,color .2s ease}")
+     ".theme label:hover{color:var(--text)}"
+     ".theme input:checked+label{background:var(--chip);color:var(--chip-ink)}"
+     ".theme input:focus-visible+label{outline:3px solid var(--focus);outline-offset:2px}"
+     ".theme svg{flex:none;width:1rem;height:1rem}"
+     "@supports not selector(:has(*)){.theme{display:none}}"
      ".brand{display:flex;align-items:center;gap:clamp(.9rem,2.5vw,1.25rem)}"
      ".mark{flex:none;width:clamp(3.25rem,8vw,4.25rem);height:clamp(3.25rem,8vw,4.25rem)}"
      ".mark svg{display:block;width:100%;height:100%}"
@@ -265,7 +298,6 @@
      ;; the sections
      "main{display:grid;gap:clamp(3.25rem,8vw,5rem);margin-top:clamp(3rem,7vw,4.5rem)}"
      "section{scroll-margin-top:1.5rem}"
-     ".kicker{display:inline-block;margin:0 0 .55rem;font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--chip-ink)}"
      "h2{margin:0;font-size:clamp(1.45rem,3.2vw,1.8rem);letter-spacing:-.015em}"
      (str "h2::after{content:\"\";display:block;width:2.6rem;height:3px;margin-top:.65rem;border-radius:3px;"
           "background:linear-gradient(90deg," (str/join "," family) ")}")
@@ -332,9 +364,9 @@
      (str "footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.4rem 1.5rem;margin-top:clamp(3.5rem,9vw,5.5rem);"
           "padding-top:1.4rem;border-top:1px solid var(--border);font-size:.88rem;color:var(--muted)}")
      "footer p{margin:0}"
-     "@media (prefers-reduced-motion:reduce){.store,.button span{transition:none}.store:hover,.button:hover span{transform:none}}"
+     "@media (prefers-reduced-motion:reduce){:root,.theme label,.store,.button span{transition:none}.store:hover,.button:hover span{transform:none}}"
      (str "@media print{:root{--bg:#fff;--surface:#fff;--surface-2:#fff;--text:#000;--muted:#333;--heading:#000;--link:#000;--border:#bbb;--shadow:none}"
-          "body{background:#fff}.app::before,.project::before,.jump{display:none}}")]
+          "body{background:#fff}.app::before,.project::before,.jump,.theme{display:none}}")]
     (for [{:keys [folder accent]} apps]
       (format ".app-%s::before{background:linear-gradient(90deg,%s,%s)}" folder (first accent) (second accent)))
     (for [{:keys [id accent]} projects]
@@ -366,13 +398,35 @@
    [:link {:rel "icon" :type "image/svg+xml" :href (data-uri (hub-mark))}]
    [:style (h/raw style)]])
 
+(def ^:private theme-choices
+  "The switcher's choices: id, label, what it does, and its icon (our own
+  drawings, in the text's colour)."
+  [["system" "Auto" "Follow your system's setting"
+    "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 1.75a6.25 6.25 0 0 1 0 12.5Z\" fill=\"currentColor\"/></svg>"]
+   ["light" "Light" "Always light"
+    "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"3\" fill=\"currentColor\"/><path d=\"M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M3.05 12.95l1.13-1.13M11.82 4.18l1.13-1.13\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>"]
+   ["dark" "Dark" "Always dark"
+    "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.5 10.3A6 6 0 0 1 5.7 2.5a6 6 0 1 0 7.8 7.8Z\" fill=\"currentColor\"/></svg>"]])
+
+(defn- theme-switcher
+  "Auto, Light or Dark, as radio buttons the stylesheet reads (no script)."
+  []
+  [:fieldset.theme
+   [:legend "Colour theme"]
+   (for [[id label title icon] theme-choices]
+     (list [:input (cond-> {:type "radio" :name "theme" :id (str "theme-" id) :value id}
+                     (= id "system") (assoc :checked true))]
+           [:label {:for (str "theme-" id) :title title} (h/raw icon) label]))])
+
 (defn- header [site & [jump]]
   [:header.hero
-   [:div.brand
-    [:span.mark {:aria-hidden "true"} (h/raw (hub-mark))]
-    [:div
-     [:p.eyebrow "Clogem"]
-     [:h1 "Support"]]]
+   [:div.top
+    [:div.brand
+     [:span.mark {:aria-hidden "true"} (h/raw (hub-mark))]
+     [:div
+      [:p.eyebrow "Clogem"]
+      [:h1 "Support"]]]
+    (theme-switcher)]
    [:div.rule]
    [:p.lead (:lead site)]
    jump])
@@ -437,12 +491,10 @@
                        [:a {:href "#feedback"} "Feedback & support"]])
          [:main
           [:section#open-source {:aria-labelledby "open-source-title"}
-           [:p.kicker "Open source"]
            [:h2#open-source-title (:title os)]
            [:p.section-lead (:lead os)]
            [:div.projects (map project-card projects)]]
           [:section#apps {:aria-labelledby "apps-title"}
-           [:p.kicker "Commercial"]
            [:h2#apps-title (:title com)]
            [:p.section-lead (:lead com)]
            [:div.apps (map app-card apps)]
@@ -450,7 +502,6 @@
             [:span.chip "Later"]
             [:p (:note com)]]]
           [:section#feedback {:aria-labelledby "feedback-title"}
-           [:p.kicker "Help"]
            [:h2#feedback-title (:title fb)]
            [:p.section-lead (:lead fb)]
            [:div.channels
