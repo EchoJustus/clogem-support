@@ -1,0 +1,23 @@
+;; Copyright 2026 EchoJustus. Part of clogem-support.
+;;
+;; The words of the support hub's front page, and the apps it lists
+;; (`bb portal`, scripts/portal.clj). The hub is the gh-pages branch of this
+;; repository: each app publishes its own folder there, and this page is the
+;; root. Everything here is public.
+{:url   "https://echojustus.github.io/clogem-support/"
+ :title "Clogem Support"
+ :lead  "Help, contact and privacy policies for Clogem apps."
+
+ ;; One entry per app, in the order shown. An app is listed once its folder
+ ;; is on gh-pages (its first publication); its icon comes from its own
+ ;; page there. :accent is two colours from its icon, for the card's strip.
+ :apps
+ [{:folder   "wmark-pro"
+   :name     "Wmark Pro"
+   :subtitle "Video Watermarker"
+   :about    "Watermarks whole batches of videos in ways that make AI watermark removal harder. For Windows."
+   :accent   ["#7A63DC" "#EDBE6A"]}]
+
+ ;; Where to turn, after each app's own page
+ :issues   "https://github.com/EchoJustus/clogem-support/issues"
+ :business "EchoJustus.Studio@outlook.com"}
