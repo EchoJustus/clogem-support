@@ -2,7 +2,7 @@
 <!-- Not covered by the MIT license: see "License" below and the repository's README. -->
 # Wmark Pro: the Store trailer
 
-A 54-second trailer for **Wmark Pro: Video Watermarker** in the Microsoft
+A 60-second trailer (59.9 s) for **Wmark Pro: Video Watermarker** in the Microsoft
 Store, with closed captions in the eighteen languages of its Store
 listing. It shows the app at work on open films: a batch of three
 videos, the logo flipping in 3D, warning text, the canary frames, the
@@ -30,7 +30,7 @@ without one it is listed with the screenshots.
 
    ```
    bb trailer-footage          # once: the open footage, checked against its SHA-256
-   bb trailer --quality store  # -> wmark-pro-trailer-store.mp4 (about 340 MB)
+   bb trailer --quality store  # -> wmark-pro-trailer-store.mp4 (about 375 MB)
    ```
 
    `wmark-pro-trailer.mp4` itself passes every hard rule too, at a lower
@@ -69,7 +69,9 @@ optional. One could be made later as an MP3 reading out the cards.
    real. The app watermarked the three clips with its "Studio release"
    profile, and the results are in `sources/`.
 3. **The cut.** `scripts/trailer/edit.clj` cuts the take on its marks,
-   speeds up the waits, holds on a canary frame, crossfades the segments
+   speeds up the waits, freezes every canary frame so it can be read (2.2 s
+   for the one the canary card explains, 1 s for each of the others, which
+   the app draws for three frames every 2 s), crossfades the segments
    and lays the cards over them (`edit.edn`, `words.edn`). The title card
    uses the app's icon and Open Sans.
 4. **Sound.** `scripts/trailer/music.clj` synthesizes the music with

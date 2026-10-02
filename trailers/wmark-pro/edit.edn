@@ -11,10 +11,16 @@
 ;; words.edn; :upper cards sit near the top, out of the app's way.
 {:crossfade 0.4
  :segments
- [;; the result first: a watermarked film, its logo flipping
+ [;; the result first: a watermarked film, its logo flipping. Its canary
+  ;; frames (three frames every 2 s in the app's profile) are frozen for a
+  ;; second each, so they read as text rather than a glitch
   {:id :open
    :fit :letterbox
-   :parts [{:from :dragon :in 2.40 :out 7.00}]
+   :parts [{:from :dragon :in 2.40 :out 4.15}
+           {:from :dragon :hold {:at 4.15 :for 1.0}}
+           {:from :dragon :in 4.15 :out 6.15}
+           {:from :dragon :hold {:at 6.15 :for 1.0}}
+           {:from :dragon :in 6.15 :out 7.00}]
    :cards [{:text :open :from 0.6 :until -0.45}]}
 
   {:id :title
@@ -56,10 +62,20 @@
            {:from :take :in [:rendered -0.3] :out [:end -0.2]}]
    :cards [{:text :render :sub :render-sub :from 0.5 :until -0.4 :place :upper}]}
 
-  ;; the other two results: their canaries fall at their own moments
+  ;; the other two results: their canaries fall at their own moments, each
+  ;; frozen for a second so it can be read
   {:id :results
-   :parts [{:from :meadow :in 5.90 :out 8.90}
-           {:from :desert :in 4.40 :out 7.40 :fit :letterbox}]
+   :parts [{:from :meadow :in 5.90 :out 6.30}
+           {:from :meadow :hold {:at 6.30 :for 1.0}}
+           {:from :meadow :in 6.30 :out 8.30}
+           {:from :meadow :hold {:at 8.30 :for 1.0}}
+           {:from :meadow :in 8.30 :out 8.90}
+           {:from :desert :in 4.62 :out 5.10 :fit :letterbox}
+           {:from :desert :hold {:at 5.10 :for 1.0} :fit :letterbox}
+           {:from :desert :in 5.10 :out 7.10 :fit :letterbox}
+           {:from :desert :hold {:at 7.10 :for 1.0} :fit :letterbox}
+           ;; to the clip's end, so its canary is gone before the end card fades in
+           {:from :desert :in 7.10 :out 7.62 :fit :letterbox}]
    :cards [{:text :timing :from 0.4 :until -0.4}]}
 
   {:id :end
