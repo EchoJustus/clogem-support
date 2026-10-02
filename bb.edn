@@ -1,0 +1,9 @@
+;; Copyright 2026 EchoJustus. Part of clogem-support.
+{:paths ["test"]
+ :tasks
+ {portal {:doc  "The hub's front page: index.html, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn)"
+          :task (apply shell "bb" "scripts/portal.clj" *command-line-args*)}
+  test   {:doc      "The front page's rules and the publishing workflow's, run against a local stand-in for gh-pages (test/portal_test.clj)"
+          :requires ([clojure.test :as t] [portal-test])
+          :task     (let [{:keys [fail error]} (t/run-tests 'portal-test)]
+                      (when (pos? (+ fail error)) (System/exit 1)))}}}

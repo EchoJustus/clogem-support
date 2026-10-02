@@ -1,0 +1,123 @@
+# Copyright 2026 EchoJustus. Part of clogem-support.
+#
+# The support hub's front page, https://echojustus.github.io/clogem-support/
+#
+# The hub is this repository's gh-pages branch. Each app publishes its own
+# folder there from its own repository (its support and privacy page). This
+# workflow owns the root alone: `bb portal` (scripts/portal.clj, from
+# site/site.edn) builds index.html, 404.html and .nojekyll, listing the apps
+# whose folders are on the branch, and it commits those three files and
+# nothing else. It never force-pushes, and if an app publishes at the same
+# moment, it starts again from the branch as it now is.
+#
+# It runs when the page's sources change on main, by hand, and after every
+# Pages build (page_build): an app's first publication then gets its card,
+# and a changed icon shows on it.
+#
+# "Commits pushed by a GitHub Actions workflow that uses the GITHUB_TOKEN do
+# not trigger a GitHub Pages build" ("Configuring a publishing source for
+# your GitHub Pages site", GitHub Docs). So whenever the live page isn't the
+# one built here, it asks for a build (POST /repos/{owner}/{repo}/pages/builds,
+# the Pages permission) and waits until it is.
+name: portal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - site/**
+      - scripts/**
+      - test/**
+      - bb.edn
+      - .github/workflows/portal.yml
+  pull_request:
+  page_build:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeLaGuardo/setup-clojure@6d46099eae24853c33c0482f2bb54edf4f1a4c74 # 13.7.0
+        with: { bb: latest }
+      - run: bb test
+
+  publish:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # commit the root files to gh-pages
+      pages: write # ask Pages for a build
+    concurrency:
+      group: portal
+      cancel-in-progress: false
+    env:
+      URL: https://echojustus.github.io/clogem-support/
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: DeLaGuardo/setup-clojure@6d46099eae24853c33c0482f2bb54edf4f1a4c74 # 13.7.0
+        with: { bb: latest }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages
+          path: pages
+
+      - name: Publish the root files (index.html, 404.html, .nojekyll) to gh-pages
+        id: publish
+        run: |
+          set -euo pipefail
+          git -C pages config user.name "github-actions[bot]"
+          git -C pages config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # One attempt: the branch as it is now, the root files built from
+          # it, the apps' folders as they were. 0 = published or unchanged,
+          # 1 = refused.
+          publish() {
+            git -C pages fetch --quiet origin +refs/heads/gh-pages:refs/remotes/origin/gh-pages || return 1
+            git -C pages reset --quiet --hard origin/gh-pages || return 1
+            rm -rf _site
+            bb scripts/portal.clj --site-dir pages --out _site || exit 1
+            cp _site/index.html _site/404.html _site/.nojekyll pages/ || exit 1
+            git -C pages add -- index.html 404.html .nojekyll || return 1
+            if git -C pages diff --cached --quiet; then
+              echo "::notice::The front page is unchanged: nothing to publish."; return 0
+            fi
+            git -C pages commit --quiet -m "Publish the support hub's front page" || return 1
+            git -C pages push --quiet origin HEAD:gh-pages || return 1
+            echo "::notice::Published the front page."
+          }
+
+          for attempt in 1 2 3; do
+            if publish; then exit 0; fi
+            echo "::warning::Publishing was refused (an app may have published at the same moment); attempt $attempt of 3."
+            sleep $((attempt * 5))
+          done
+          echo "::error::Could not publish the front page after 3 attempts."
+          exit 1
+
+      - name: Make sure the live page is the one built
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The live front page, past any cache, against the one just built
+          live() {
+            curl -fsS --max-time 20 -o live.html "${URL}?run=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-$1" 2> /dev/null &&
+              cmp -s live.html _site/index.html
+          }
+          if live 0; then echo "::notice::$URL is up to date."; exit 0; fi
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent
+          echo "Asked GitHub Pages for a build; waiting for $URL"
+          for i in $(seq 1 40); do
+            sleep 15
+            if live "$i"; then echo "::notice::Live: $URL"; exit 0; fi
+          done
+          gh api "repos/$GITHUB_REPOSITORY/pages/builds/latest" \
+            --jq '"The latest Pages build: \(.status) \(.error.message // "")"' || true
+          echo "::error::$URL still isn't the page built here after 10 minutes."
+          exit 1
