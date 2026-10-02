@@ -1,0 +1,47 @@
+# Copyright 2026 EchoJustus. Part of clogem-support.
+# SPDX-License-Identifier: MIT
+#
+# The form of the Q&A category of Discussions: the front page's "Ask a
+# question" opens it (site/site.edn, :feedback; README, "Feedback"). The
+# file is named for the category's slug. The answer we mark shows first.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask anything about using the app. Everything here is public: leave out personal details, license keys and videos.
+        For something private, write to EchoJustus.Studio@outlook.com.
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app is it about?
+      options:
+        - Wmark Pro
+        - The support site
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Wmark Pro: Settings > About."
+      placeholder: "1.0.3"
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What you want to do, or what the app did that you didn't expect.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Optional. A screenshot helps; paste or drop it here.
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Before you post
+      options:
+        - label: I left out personal details, license keys and videos.
+          required: true

@@ -1,0 +1,83 @@
+# Copyright 2026 EchoJustus. Part of clogem-support.
+# SPDX-License-Identifier: MIT
+#
+# The bug report form: the front page's "Report a bug" opens it
+# (site/site.edn, :feedback; README, "Feedback").
+name: Bug report
+description: Something in a Clogem app broke or looks wrong.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. Everything here is public: leave out personal details, license keys and videos.
+        For something private, write to EchoJustus.Studio@outlook.com.
+        For clogem-wmark or clogem-press, open the issue in that project's own repository.
+  - type: dropdown
+    id: app
+    attributes:
+      label: Which app?
+      options:
+        - Wmark Pro
+        - The support site
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Wmark Pro: Settings > About."
+      placeholder: "1.0.3"
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Windows 11 (x64)
+        - Windows 11 on Arm
+        - Windows 10
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: A screenshot helps; paste or drop it here.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: "Optional. For a render that failed in Wmark Pro: the Diagnostics report from Settings > About, pasted here."
+      render: text
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Before you send
+      options:
+        - label: I left out personal details, license keys and videos.
+          required: true

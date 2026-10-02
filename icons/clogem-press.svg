@@ -1,0 +1,34 @@
+<!-- Copyright (c) 2026 clogem-press contributors. EPL-2.0 (see LICENSE). -->
+<!-- clogem-press icon, 48 master -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+<path d="M22 12A3.5 3.5 0 0 1 25.5 8.5H31A1 1 0 0 0 32 7.5A3 3 0 0 1 35 4.5H39A3 3 0 0 1 42 7.5V28A3.5 3.5 0 0 1 38.5 31.5H28A6 6 0 0 1 22 25.5Z" fill="url(#cp-b)"/>
+<path d="M22 12A3.5 3.5 0 0 1 25.5 8.5H31A1 1 0 0 0 32 7.5A3 3 0 0 1 35 4.5H39A3 3 0 0 1 42 7.5V28A3.5 3.5 0 0 1 38.5 31.5H28A6 6 0 0 1 22 25.5Z" fill="url(#cp-bg)" fill-opacity="0.55"/>
+<path d="M22 12A3.5 3.5 0 0 1 25.5 8.5H31A1 1 0 0 0 32 7.5A3 3 0 0 1 35 4.5H39A3 3 0 0 1 42 7.5V28A3.5 3.5 0 0 1 38.5 31.5H28A6 6 0 0 1 22 25.5Z" fill="url(#cp-bk)" fill-opacity="0.5"/>
+<path d="M22 12A3.5 3.5 0 0 1 25.5 8.5H31A1 1 0 0 0 32 7.5A3 3 0 0 1 35 4.5H39A3 3 0 0 1 42 7.5V28A3.5 3.5 0 0 1 38.5 31.5H28A6 6 0 0 1 22 25.5Z" fill="url(#cp-bt)" fill-opacity="0.5"/>
+<path d="M22 12A3.5 3.5 0 0 1 25.5 8.5H31A1 1 0 0 0 32 7.5A3 3 0 0 1 35 4.5H39A3 3 0 0 1 42 7.5V28A3.5 3.5 0 0 1 38.5 31.5H28A6 6 0 0 1 22 25.5Z" fill="url(#cp-br)" fill-opacity="0.5"/>
+<path d="M12 17.5A3 3 0 0 1 15 14.5A1 1 0 0 0 16 13.5A3 3 0 0 1 19 10.5H23A3 3 0 0 1 26 13.5A1 1 0 0 0 27 14.5H30.5A3.5 3.5 0 0 1 34 18V34A3.5 3.5 0 0 1 30.5 37.5H18A6 6 0 0 1 12 31.5Z" fill="url(#cp-m)"/>
+<path d="M12 17.5A3 3 0 0 1 15 14.5A1 1 0 0 0 16 13.5A3 3 0 0 1 19 10.5H23A3 3 0 0 1 26 13.5A1 1 0 0 0 27 14.5H30.5A3.5 3.5 0 0 1 34 18V34A3.5 3.5 0 0 1 30.5 37.5H18A6 6 0 0 1 12 31.5Z" fill="url(#cp-mg)" fill-opacity="0.5"/>
+<path d="M12 17.5A3 3 0 0 1 15 14.5A1 1 0 0 0 16 13.5A3 3 0 0 1 19 10.5H23A3 3 0 0 1 26 13.5A1 1 0 0 0 27 14.5H30.5A3.5 3.5 0 0 1 34 18V34A3.5 3.5 0 0 1 30.5 37.5H18A6 6 0 0 1 12 31.5Z" fill="url(#cp-mk)" fill-opacity="0.5"/>
+<path d="M12 17.5A3 3 0 0 1 15 14.5A1 1 0 0 0 16 13.5A3 3 0 0 1 19 10.5H23A3 3 0 0 1 26 13.5A1 1 0 0 0 27 14.5H30.5A3.5 3.5 0 0 1 34 18V34A3.5 3.5 0 0 1 30.5 37.5H18A6 6 0 0 1 12 31.5Z" fill="url(#cp-mt)" fill-opacity="0.5"/>
+<path d="M12 17.5A3 3 0 0 1 15 14.5A1 1 0 0 0 16 13.5A3 3 0 0 1 19 10.5H23A3 3 0 0 1 26 13.5A1 1 0 0 0 27 14.5H30.5A3.5 3.5 0 0 1 34 18V34A3.5 3.5 0 0 1 30.5 37.5H18A6 6 0 0 1 12 31.5Z" fill="url(#cp-mr)" fill-opacity="0.5"/>
+<path d="M6 19.5A3 3 0 0 1 9 16.5H13A3 3 0 0 1 16 19.5A1 1 0 0 0 17 20.5H24.5A3.5 3.5 0 0 1 28 24V40A3.5 3.5 0 0 1 24.5 43.5H14A8 8 0 0 1 6 35.5Z" fill="url(#cp-f)"/>
+<path d="M6 19.5A3 3 0 0 1 9 16.5H13A3 3 0 0 1 16 19.5A1 1 0 0 0 17 20.5H24.5A3.5 3.5 0 0 1 28 24V40A3.5 3.5 0 0 1 24.5 43.5H14A8 8 0 0 1 6 35.5Z" fill="url(#cp-fg)" fill-opacity="0.4"/>
+<path d="M6 19.5A3 3 0 0 1 9 16.5H13A3 3 0 0 1 16 19.5A1 1 0 0 0 17 20.5H24.5A3.5 3.5 0 0 1 28 24V40A3.5 3.5 0 0 1 24.5 43.5H14A8 8 0 0 1 6 35.5Z" fill="url(#cp-fs)" fill-opacity="0.5"/>
+<path d="M6.789 35.5H12.25A1.75 1.75 0 0 1 14 37.25V42.711A0.75 0.75 0 0 1 13.172 43.457A8 8 0 0 1 6.043 36.328A0.75 0.75 0 0 1 6.789 35.5Z" fill="url(#cp-fc)"/>
+<defs>
+<linearGradient id="cp-b" x1="22" y1="4.5" x2="50.15" y2="24.21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0B8A62"/><stop offset="0.5" stop-color="#077A52"/><stop offset="1" stop-color="#055C3C"/></linearGradient>
+<radialGradient id="cp-bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(23 4.5) rotate(35) scale(18 10)"><stop offset="0" stop-color="#4FE8D2"/><stop offset="1" stop-color="#4FE8D2" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-bk" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(22 10.5) scale(5 1.6)"><stop offset="0" stop-color="#00301F"/><stop offset="1" stop-color="#00301F" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-bt" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(30.5 14.5) scale(4 1.6)"><stop offset="0" stop-color="#00301F"/><stop offset="1" stop-color="#00301F" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-br" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(34 26) scale(1.6 11)"><stop offset="0" stop-color="#00301F"/><stop offset="1" stop-color="#00301F" stop-opacity="0"/></radialGradient>
+<linearGradient id="cp-m" x1="12" y1="10.5" x2="40.15" y2="30.21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1FB088"/><stop offset="0.5" stop-color="#0A8460"/><stop offset="1" stop-color="#076E4C"/></linearGradient>
+<radialGradient id="cp-mg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12 10.5) rotate(35) scale(22 11)"><stop offset="0" stop-color="#4FE8D2"/><stop offset="1" stop-color="#4FE8D2" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-mk" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11 16.5) scale(5 1.6)"><stop offset="0" stop-color="#003D29"/><stop offset="1" stop-color="#003D29" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-mt" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(22 20.5) scale(6 1.6)"><stop offset="0" stop-color="#003D29"/><stop offset="1" stop-color="#003D29" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-mr" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(28 32) scale(1.6 11)"><stop offset="0" stop-color="#003D29"/><stop offset="1" stop-color="#003D29" stop-opacity="0"/></radialGradient>
+<linearGradient id="cp-f" x1="6" y1="16.5" x2="34.15" y2="36.21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8BEFD0"/><stop offset="0.4" stop-color="#1AAE83"/><stop offset="1" stop-color="#0C8864"/></linearGradient>
+<radialGradient id="cp-fg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(6 16.5) rotate(35) scale(18 12)"><stop offset="0" stop-color="#A6F5E0"/><stop offset="1" stop-color="#A6F5E0" stop-opacity="0"/></radialGradient>
+<radialGradient id="cp-fs" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11 38.5) rotate(45) scale(5.5 3.6)"><stop offset="0" stop-color="#003D29"/><stop offset="1" stop-color="#003D29" stop-opacity="0"/></radialGradient>
+<linearGradient id="cp-fc" x1="6" y1="35.5" x2="14" y2="43.5" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0A7F60"/><stop offset="1" stop-color="#055A44"/></linearGradient>
+</defs>
+</svg>

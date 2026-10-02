@@ -1,24 +1,92 @@
 ;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
 ;; Not covered by the MIT license: see the README, "License".
 ;;
-;; The words of the support hub's front page, and the apps it lists
-;; (`bb portal`, scripts/portal.clj). The hub is the gh-pages branch of this
-;; repository: each app publishes its own folder there, and this page is the
-;; root. Everything here is public.
+;; The words of the support hub's front page, the software it lists, and
+;; where to turn for help (`bb portal`, scripts/portal.clj). The hub is the
+;; gh-pages branch of this repository: each app publishes its own folder
+;; there, and this page is the root. Everything here is public.
 {:url   "https://echojustus.github.io/clogem-support/"
  :title "Clogem Support"
- :lead  "Help, contact and privacy policies for Clogem apps."
+ :lead  "Help, contact and privacy policies for Clogem apps, and the open-source projects they are built on."
 
- ;; One entry per app, in the order shown. An app is listed once its folder
- ;; is on gh-pages (its first publication); its icon comes from its own
- ;; page there. :accent is two colours from its icon, for the card's strip.
+ ;; The projects built in the open, in the order shown (the owner's,
+ ;; 2026-10-02). Each icon is a file in icons/ (its README says where it
+ ;; comes from); :accent is two colours from it, for the card's strip. A
+ ;; project links to its source with :repo, or says :status while its
+ ;; source isn't public.
+ :open-source
+ {:title "Open-source core software"
+  :lead  "The tools and libraries we build in the open. Read the code, use it, and send issues and pull requests to each project."
+  :projects
+  [{:id       "clogem-hstry"
+    :name     "clogem-hstry"
+    :subtitle "Chat history"
+    :about    "A local-first tool for capturing, searching and analysing chat history."
+    :icon     "icons/clogem-hstry.svg"
+    :accent   ["#FFD640" "#D29A12"]
+    :status   "In early development. Its source isn't public yet."}
+   {:id       "clogem-press"
+    :name     "clogem-press"
+    :subtitle "Knowledge bases, blogs and docs"
+    :about    "A site generator for knowledge bases, blogs and documentation, with content in up to five languages. It runs on Babashka, with no other dependencies."
+    :icon     "icons/clogem-press.svg"
+    :accent   ["#4FE8D2" "#1FB088"]
+    :repo     "https://github.com/EchoJustus/clogem-press"
+    :license  "EPL-2.0"}
+   {:id       "clogem-wmark"
+    :name     "clogem-wmark"
+    :subtitle "Video watermarking, the open core"
+    :about    "Batch video watermarking that raises the cost of AI watermark removal: a logo that flips in 3D, and warning text on keyed schedules. The engine, command line and web UI that Wmark Pro is built on."
+    :icon     "icons/clogem-wmark.svg"
+    :accent   ["#8DB4F7" "#4F80E3"]
+    :repo     "https://github.com/EchoJustus/clogem-wmark"
+    :license  "EPL-2.0"}]}
+
+ ;; The apps, in the order shown. An app is listed once its folder is on
+ ;; gh-pages (its first publication); its icon comes from its own page
+ ;; there. :accent is two colours from its icon, for the card's strip.
+ ;; :store is where to get it: the Microsoft Store's address is a
+ ;; placeholder until the listing is live, then
+ ;; https://apps.microsoft.com/detail/9PMP1591Q78R (Store ID 9PMP1591Q78R).
+ :commercial
+ {:title "Commercial software"
+  :lead  "Apps built on the open core, with an interface made for creators. Each has its own support page and privacy policy."
+  :note  "As tools like clogem-press mature, they will get Pro editions too: apps with a friendly interface for managing your content."}
  :apps
  [{:folder   "wmark-pro"
    :name     "Wmark Pro"
    :subtitle "Video Watermarker"
    :about    "Watermarks whole batches of videos in ways that make AI watermark removal harder. For Windows."
-   :accent   ["#7A63DC" "#EDBE6A"]}]
+   :accent   ["#7A63DC" "#EDBE6A"]
+   :store    {:name "Microsoft Store"
+              :url  "https://apps.microsoft.com/"
+              :note "Windows 10 and 11 · x64 and Arm64"}}]
 
- ;; Where to turn, after each app's own page
- :issues   "https://github.com/EchoJustus/clogem-support/issues"
+ ;; Feedback and support in the open: GitHub Discussions and issues in this
+ ;; repository, where we reply. Each :discussion is a category's slug (its
+ ;; form is .github/DISCUSSION_TEMPLATE/<slug>.yml); an :issue-form is a
+ ;; file in .github/ISSUE_TEMPLATE/. The README's "Feedback" says how
+ ;; Discussions are set up.
+ :feedback
+ {:repo     "https://github.com/EchoJustus/clogem-support"
+  :title    "Feedback & support"
+  :lead     "Ask, suggest and report on GitHub, in the open. We reply there, and every answer helps the next person too."
+  :channels [{:badge      "Ideas"
+              :title      "Share feedback or an idea"
+              :about      "What works for you, what doesn't, and what you would like next."
+              :discussion "ideas"
+              :action     "Start a discussion"}
+             {:badge      "Q&A"
+              :title      "Ask a question"
+              :about      "How to do something, or why an app did what it did."
+              :discussion "q-a"
+              :action     "Ask a question"}
+             {:badge      "Bug"
+              :title      "Report a bug"
+              :about      "Something broke or looks wrong: tell us the app, its version and the steps."
+              :issue-form "bug-report.yml"
+              :action     "Report a bug"}]
+  :note     "You need a free GitHub account. Everything there is public: leave out personal details, license keys and videos. GitHub tells you when we reply."}
+
+ ;; For what shouldn't be public
  :business "EchoJustus.Studio@outlook.com"}

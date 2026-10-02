@@ -6,6 +6,7 @@
   .github/workflows/portal.yml, whose publishing step is run here against a
   local repository standing in for gh-pages."
   (:require [babashka.fs :as fs]
+            [portal]
             [babashka.process :as p]
             [clj-yaml.core :as yaml]
             [clojure.edn :as edn]
@@ -67,10 +68,43 @@
       (is (str/includes? index "href=\"wmark-pro/\""))
       (is (str/includes? index "href=\"wmark-pro/#privacy\""))
       (is (re-find (re-pattern (str "<img [^>]*src=\"" (java.util.regex.Pattern/quote icon) "\"")) index)))
-    (testing "where to turn next: public issues, the business address"
-      (is (str/includes? index (str "href=\"" (:issues site) "\"")))
-      (is (str/includes? index (str "href=\"mailto:" (:business site) "?subject=Clogem\"")))
-      (is (str/includes? index "Issues are public")))
+    (testing "where to get it: the store's button, with the app's name for screen readers"
+      (let [{:keys [url note] store :name} (get-in site [:apps 0 :store])]
+        (is (re-find (re-pattern (str "<a [^>]*class=\"store\"[^>]*href=\"" (java.util.regex.Pattern/quote url) "\""
+                                      "|<a [^>]*href=\"" (java.util.regex.Pattern/quote url) "\"[^>]*class=\"store\""))
+                     index))
+        (is (str/includes? index (str "aria-label=\"Get Wmark Pro from the " store "\"")))
+        (is (str/includes? index note))
+        (is (not (re-find #"(?i)microsoft[^\"<]*logo|<img [^>]*store" index)) "our own button, no store's logo")))
+    (testing "the open-source projects, in site.edn's order, each with its icon and its source or its status"
+      (let [projects (get-in site [:open-source :projects])
+            at       (map #(str/index-of index (str "class=\"project project-" (:id %) "\"")) projects)]
+        (is (every? some? at))
+        (is (apply < at) "in site.edn's order")
+        (is (str/includes? index (get-in site [:open-source :title])))
+        (doseq [{:keys [repo status license]} projects]
+          (if repo
+            (do (is (str/includes? index (str "href=\"" repo "\"")))
+                (is (str/includes? index (str "Open source · " license))))
+            (is (str/includes? index (str/replace status "'" "&apos;")))))
+        (is (= (count projects) (count (re-seq #"<img [^>]*class=\"app-icon\" [^>]*src=\"data:image/svg\+xml;base64,"
+                                               (subs index (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"")))))
+            "every project's icon, embedded")))
+    (testing "open source first, then the commercial apps with the note about Pro editions to come"
+      (is (< (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"") (str/index-of index "id=\"feedback\"")))
+      (is (str/includes? index (get-in site [:commercial :title])))
+      (is (str/includes? index (get-in site [:commercial :note]))))
+    (testing "feedback in the open: each channel opens its discussion category or issue form"
+      (let [{:keys [repo channels note]} (:feedback site)]
+        (doseq [{:keys [discussion issue-form action]} channels]
+          (is (str/includes? index (if discussion
+                                     (str "href=\"" repo "/discussions/new?category=" discussion "\"")
+                                     (str "href=\"" repo "/issues/new?template=" issue-form "\""))))
+          (is (str/includes? index action)))
+        (is (str/includes? index (str "href=\"" repo "/discussions\"")))
+        (is (str/includes? index (str/replace note "'" "&apos;")))))
+    (testing "and the business address, for what shouldn't be public"
+      (is (str/includes? index (str "href=\"mailto:" (:business site) "?subject=Clogem\""))))
     (testing "the 404 page: served at any missing address, so its links are absolute"
       (is (str/includes? not-found "Page not found"))
       (is (str/includes? not-found (str "href=\"" (:url site) "\"")))
@@ -143,7 +177,18 @@
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)]
     (doseq [[problem f] {":url must be https"            #(assoc % :url "http://echojustus.github.io/clogem-support/")
-                         ":issues must be an https"      #(assoc % :issues "javascript:alert(1)")
+                         ":feedback's :repo must be"     #(assoc-in % [:feedback :repo] "javascript:alert(1)")
+                         "a :discussion (a category's"   #(assoc-in % [:feedback :channels 0 :issue-form] "bug-report.yml")
+                         "its :discussion must be"       #(assoc-in % [:feedback :channels 0 :discussion] "Q&A")
+                         "its :issue-form must be"       #(assoc-in % [:feedback :channels 2 :issue-form] "../x.yml")
+                         "its :store needs"              #(assoc-in % [:apps 0 :store :url] "http://apps.microsoft.com/")
+                         ":commercial needs"             #(update % :commercial dissoc :note)
+                         "it needs a :repo (its source)" #(assoc-in % [:open-source :projects 0 :repo] "https://github.com/EchoJustus/clogem-hstry")
+                         "its :repo must be a GitHub"    #(assoc-in % [:open-source :projects 1 :repo] "https://example.com/clogem-press")
+                         "it names its :license"         #(update-in % [:open-source :projects 1] dissoc :license)
+                         "its :icon must be an .svg"     #(assoc-in % [:open-source :projects 2 :icon] "../../etc/passwd")
+                         "own :id"                       #(update-in % [:open-source :projects] (fn [ps] (conj ps (first ps))))
+                         "at least one project"          #(assoc-in % [:open-source :projects] [])
                          ":business must be an email"    #(assoc % :business "someone")
                          "its :folder must be one"       #(assoc-in % [:apps 0 :folder] "../wmark-pro")
                          "its :accent must be two"       #(assoc-in % [:apps 0 :accent] ["red" "#EDBE6A"])
@@ -159,6 +204,56 @@
         (is (zero? exit))
         (is (str/includes? index "&lt;script&gt;alert(1)&lt;/script&gt; &amp; more"))
         (is (not (str/includes? index "<script")))))))
+
+(deftest the-projects-icons-are-plain-drawings
+  (testing "each icon site.edn names is in icons/, a plain SVG that runs nothing and reaches nothing outside it"
+    (doseq [{:keys [id icon]} (get-in site [:open-source :projects])]
+      (let [svg (slurp icon)]
+        (is (nil? (portal/icon-problem svg)) id))))
+  (testing "what makes an icon unsafe"
+    (doseq [[what svg] {"a script"        "<svg><script>alert(1)</script></svg>"
+                        "a handler"       "<svg onload=\"alert(1)\"></svg>"
+                        "a link out"      "<svg><use href=\"https://elsewhere.example/a.svg#x\"/></svg>"
+                        "an image"        "<svg><image href=\"#x\"/></svg>"
+                        "a url() outside" "<svg><rect fill=\"url(https://elsewhere.example/p)\"/></svg>"
+                        "not an SVG"      "<html></html>"}]
+      (is (some? (portal/icon-problem svg)) what)))
+  (testing "references inside the drawing are fine"
+    (is (nil? (portal/icon-problem "<svg><rect fill=\"url(#g)\" filter=\"url(#s)\"/><use href=\"#a\"/></svg>"))))
+  (testing "a missing or unsafe icon stops the build"
+    (let [pages (temp-dir)
+          _     (app-page! pages "wmark-pro" wmark-pro-head)]
+      (doseq [[said f] {"isn't there"         #(assoc-in % [:open-source :projects 0 :icon] "icons/missing.svg")}]
+        (let [{:keys [exit] out :said} (portal! pages "--config" (config! f))]
+          (is (= 1 exit))
+          (is (str/includes? out said) out))))))
+
+(deftest every-feedback-channel-has-its-form
+  (let [{:keys [channels repo]} (:feedback site)]
+    (is (= repo "https://github.com/EchoJustus/clogem-support") "the forms below are this repository's")
+    (doseq [{:keys [discussion issue-form title]} channels]
+      (testing title
+        (let [file (if discussion
+                     (str ".github/DISCUSSION_TEMPLATE/" discussion ".yml")
+                     (str ".github/ISSUE_TEMPLATE/" issue-form))
+              form (yaml/parse-string (slurp file))
+              body (:body form)]
+          (is (seq body) file)
+          (is (some #(not= "markdown" (:type %)) body) "a form needs a field")
+          (is (some #(str/includes? (str (get-in % [:attributes :value])) "public") body) "it says it's public")
+          (is (some #(and (= "checkboxes" (:type %))
+                          (some :required (get-in % [:attributes :options])))
+                    body)
+              "and asks to leave out what shouldn't be")
+          (is (apply distinct? (keep :id body)) "field ids unique")
+          (when issue-form
+            (is (every? (comp not str/blank? str) [(:name form) (:description form)]) "an issue form has a name and description")))))
+    (testing "blank issues are off; questions and ideas point to Discussions"
+      (let [config (yaml/parse-string (slurp ".github/ISSUE_TEMPLATE/config.yml"))
+            urls   (set (map :url (:contact_links config)))]
+        (is (false? (:blank_issues_enabled config)))
+        (doseq [{:keys [discussion]} channels :when discussion]
+          (is (contains? urls (str repo "/discussions/new?category=" discussion))))))))
 
 ;; ---------------------------------------------------------------------------
 ;; The workflow
@@ -193,7 +288,7 @@
     (git! seed "commit" "--quiet" "-m" "Two apps")
     (git! seed "push" "--quiet" remote "gh-pages")
     (fs/create-dirs work)
-    (doseq [d ["scripts" "site"]] (fs/copy-tree d (fs/path work d)))
+    (doseq [d ["scripts" "site" "icons"]] (fs/copy-tree d (fs/path work d)))
     (git! work "clone" "--quiet" "--branch" "gh-pages" remote "pages")
     {:remote remote :seed seed :work work}))
 
@@ -282,6 +377,12 @@
         (is (re-find #"\A(?:;;|#) Copyright 2026 EchoJustus\. Part of clogem-support\.\n(?:;;|#) SPDX-License-Identifier: MIT\n"
                      (slurp (str f)))
             (str f)))))
+  (testing "the projects' icons: each carries its own licence (icons/README.md)"
+    (is (str/includes? (slurp "icons/clogem-wmark.svg") "SPDX-License-Identifier: EPL-2.0"))
+    (is (str/includes? (slurp "icons/clogem-press.svg") "EPL-2.0"))
+    (is (str/starts-with? (slurp "icons/clogem-hstry.svg") "<!-- Copyright 2026 EchoJustus. All rights reserved. -->"))
+    (is (str/starts-with? (slurp "icons/EPL-2.0.txt") "Eclipse Public License - v 2.0"))
+    (is (str/starts-with? (slurp "icons/README.md") "<!-- Copyright 2026 EchoJustus. All rights reserved.")))
   (testing "the words: all rights reserved, outside the MIT license"
     (doseq [f (fs/glob "site" "**") :when (fs/regular-file? f)]
       (is (str/starts-with? (slurp (str f)) ";; Copyright 2026 EchoJustus. All rights reserved.") (str f))))

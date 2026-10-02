@@ -1,0 +1,16 @@
+# Copyright 2026 EchoJustus. Part of clogem-support.
+# SPDX-License-Identifier: MIT
+#
+# New issues start from the bug report form; questions and ideas go to
+# Discussions, where answers stay findable (README, "Feedback").
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/EchoJustus/clogem-support/discussions/new?category=q-a
+    about: How to do something, or why an app did what it did.
+  - name: Share feedback or an idea
+    url: https://github.com/EchoJustus/clogem-support/discussions/new?category=ideas
+    about: What works for you, what doesn't, and what you would like next.
+  - name: Each app's support page and privacy policy
+    url: https://echojustus.github.io/clogem-support/
+    about: Contacts, tips for a quick answer, and the privacy policies.
