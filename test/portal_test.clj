@@ -1,4 +1,5 @@
 ;; Copyright 2026 EchoJustus. Part of clogem-support.
+;; SPDX-License-Identifier: MIT
 (ns portal-test
   "bb portal (scripts/portal.clj): the hub's front page and its 404 page,
   built from site/site.edn and the apps' folders on gh-pages; and
@@ -267,3 +268,26 @@
     (let [uses (map second (re-seq #"uses:\s*(\S+)" workflow-text))]
       (is (seq uses))
       (is (every? #(re-find #"@[0-9a-f]{40}$" %) uses) (pr-str uses)))))
+
+;; ---------------------------------------------------------------------------
+;; The license (README, "License")
+
+(deftest every-file-says-what-covers-it
+  (testing "code: MIT, in its first lines"
+    (let [code (concat (fs/glob "scripts" "**") (fs/glob "test" "**")
+                       (fs/glob ".github" "**" {:hidden true})
+                       [(fs/path "bb.edn") (fs/path ".gitignore")])]
+      (is (seq code))
+      (doseq [f code :when (fs/regular-file? f)]
+        (is (re-find #"\A(?:;;|#) Copyright 2026 EchoJustus\. Part of clogem-support\.\n(?:;;|#) SPDX-License-Identifier: MIT\n"
+                     (slurp (str f)))
+            (str f)))))
+  (testing "the words: all rights reserved, outside the MIT license"
+    (doseq [f (fs/glob "site" "**") :when (fs/regular-file? f)]
+      (is (str/starts-with? (slurp (str f)) ";; Copyright 2026 EchoJustus. All rights reserved.") (str f))))
+  (testing "LICENSE is the MIT text as it stands, so GitHub recognises it"
+    (let [text (slurp "LICENSE")]
+      (is (str/starts-with? text "MIT License\n\nCopyright (c) 2026 EchoJustus\n\nPermission is hereby granted, free of charge,"))
+      (is (str/ends-with? text "OTHER DEALINGS IN THE\nSOFTWARE.\n"))))
+  (testing "the README draws the line"
+    (is (str/includes? (slurp "README.md") "## License"))))

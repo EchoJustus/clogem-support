@@ -1,4 +1,5 @@
 ;; Copyright 2026 EchoJustus. Part of clogem-support.
+;; SPDX-License-Identifier: MIT
 (ns portal
   "The support hub's front page, at https://echojustus.github.io/clogem-support/:
 
