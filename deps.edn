@@ -1,0 +1,9 @@
+;; Copyright 2026 EchoJustus. Part of clogem-support.
+;; SPDX-License-Identifier: MIT
+{:paths ["scripts"]
+ :deps  {org.clojure/clojure {:mvn/version "1.12.6"}}
+ :aliases
+ {;; records the app on an X display (scripts/trailer/record.clj); the X11
+  ;; calls need native access
+  :record {:jvm-opts  ["--enable-native-access=ALL-UNNAMED"]
+           :main-opts ["-m" "trailer.record"]}}}

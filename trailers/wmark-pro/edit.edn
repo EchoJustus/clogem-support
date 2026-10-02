@@ -1,0 +1,74 @@
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
+;;
+;; The cut of the Wmark Pro trailer (trailer.edit). Sources, by name:
+;;   :take    the app, recorded from recording.edn (its marks name the times)
+;;   :dragon  sintel_dragon_wm.mp4  } rendered by the app during the take:
+;;   :desert  sintel_desert_wm.mp4  } open films, watermarked with its
+;;   :meadow  big_buck_bunny_meadow_wm.mp4 } "Studio release" profile
+;;   :icon    the app's icon, 1024 px PNG
+;; Times are seconds, or [mark offset] in the take. Card words are ids in
+;; words.edn; :upper cards sit near the top, out of the app's way.
+{:crossfade 0.4
+ :segments
+ [;; the result first: a watermarked film, its logo flipping
+  {:id :open
+   :fit :letterbox
+   :parts [{:from :dragon :in 2.40 :out 7.00}]
+   :cards [{:text :open :from 0.6 :until -0.45}]}
+
+  {:id :title
+   :title {:length 3.6
+           :background {:from :dragon :at 5.5}
+           :lines [{:word :name    :font :bold    :size 112 :color "white"    :y 560}
+                   {:word :tagline :font :regular :size 50  :color "0xE6DEFF" :y 700}]}}
+
+  ;; the app: a batch of three (the file dialog between the parts is cut)
+  {:id :batch
+   :parts [{:from :take :in [:start 0.6] :out [:add-videos 0.7]}
+           {:from :take :in [:videos-added 0.1] :out [:pick 2.7] :speed 1.25}]
+   :cards [{:text :batch :from 0.5 :until -0.4 :place :upper}]}
+
+  ;; scrubbing the preview: the logo flips at its keyed moments
+  {:id :flip
+   :zoom [100 56 1220 686]
+   :parts [{:from :take :in [:scrub -0.1] :out [:text -0.3] :speed 1.6}]
+   :cards [{:text :flip :sub :flip-sub :from 0.5 :until -0.4 :place :upper}]}
+
+  ;; warning text, typed in
+  {:id :text
+   :zoom [100 56 1220 686]
+   :parts [{:from :take :in [:text -0.1] :out [:render -0.4] :speed 1.5}]
+   :cards [{:text :text :from 0.4 :until -0.4 :place :upper}]}
+
+  ;; a canary frame, held so it can be read
+  {:id :canary
+   :fit :letterbox
+   :parts [{:from :dragon :in 7.30 :out 8.16}
+           {:from :dragon :hold {:at 8.15 :for 2.2}}
+           {:from :dragon :in 8.25 :out 9.30}]
+   :cards [{:text :canary :sub :canary-sub :from 0.45 :until -0.3}]}
+
+  ;; render the batch, the wait sped up
+  {:id :render
+   :parts [{:from :take :in [:render -0.2] :out [:rendering 0.0]}
+           {:from :take :in [:rendering 0.0] :out [:rendered -0.3] :speed 9}
+           {:from :take :in [:rendered -0.3] :out [:end -0.2]}]
+   :cards [{:text :render :sub :render-sub :from 0.5 :until -0.4 :place :upper}]}
+
+  ;; the other two results: their canaries fall at their own moments
+  {:id :results
+   :parts [{:from :meadow :in 5.90 :out 8.90}
+           {:from :desert :in 4.40 :out 7.40 :fit :letterbox}]
+   :cards [{:text :timing :from 0.4 :until -0.4}]}
+
+  {:id :end
+   :title {:length 5.8
+           :end? true
+           :background {:from :desert :at 6.0}
+           :lines [{:word :name      :font :bold     :size 96 :color "white"    :y 390}
+                   {:word :tagline   :font :regular  :size 44 :color "0xE6DEFF" :y 505}
+                   {:word :try       :font :semibold :size 46 :color "0xFFE6B0" :y 610}
+                   {:word :honest    :font :regular  :size 30 :color "0xD9D2F5" :y 700}
+                   {:word :credits   :font :regular  :size 22 :color "0xB3A8DD" :y 850}
+                   {:word :credits-2 :font :regular  :size 22 :color "0xB3A8DD" :y 884}]}}]}

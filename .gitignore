@@ -3,3 +3,8 @@
 # Built by `bb portal`, and the workflow's checkout of gh-pages: never committed to main
 /_site/
 /pages/
+# The trailer toolchain's work: downloads, clips, renders (bb trailer, bb trailer-footage)
+/target/
+/.cpcache/
+# The full-bitrate Store upload (bb trailer --quality store): made locally, never committed
+*-store.mp4

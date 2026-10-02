@@ -276,7 +276,7 @@
   (testing "code: MIT, in its first lines"
     (let [code (concat (fs/glob "scripts" "**") (fs/glob "test" "**")
                        (fs/glob ".github" "**" {:hidden true})
-                       [(fs/path "bb.edn") (fs/path ".gitignore")])]
+                       [(fs/path "bb.edn") (fs/path "deps.edn") (fs/path ".gitignore")])]
       (is (seq code))
       (doseq [f code :when (fs/regular-file? f)]
         (is (re-find #"\A(?:;;|#) Copyright 2026 EchoJustus\. Part of clogem-support\.\n(?:;;|#) SPDX-License-Identifier: MIT\n"
@@ -285,9 +285,24 @@
   (testing "the words: all rights reserved, outside the MIT license"
     (doseq [f (fs/glob "site" "**") :when (fs/regular-file? f)]
       (is (str/starts-with? (slurp (str f)) ";; Copyright 2026 EchoJustus. All rights reserved.") (str f))))
+  (testing "the trailers: all rights reserved, their third-party parts under their own licences"
+    (doseq [f (fs/glob "trailers" "*/*.edn")]
+      (is (str/starts-with? (slurp (str f)) ";; Copyright 2026 EchoJustus. All rights reserved.") (str f)))
+    (doseq [f (fs/glob "trailers" "*/captions/*.vtt")]
+      (is (str/includes? (slurp (str f)) "\nCopyright 2026 EchoJustus. All rights reserved.\n") (str f)))
+    (doseq [d (fs/glob "trailers" "*" {:max-depth 1}) :when (fs/directory? d)]
+      (let [readme (slurp (str (fs/path d "README.md")))]
+        (is (str/includes? readme "All rights reserved") (str d))
+        (is (str/includes? readme "CC BY 3.0") (str d))))
+    (doseq [fonts (fs/glob "trailers" "*/sources/fonts")]
+      (is (fs/exists? (fs/path fonts "OFL.txt")) "the fonts travel with their licence")))
   (testing "LICENSE is the MIT text as it stands, so GitHub recognises it"
     (let [text (slurp "LICENSE")]
       (is (str/starts-with? text "MIT License\n\nCopyright (c) 2026 EchoJustus\n\nPermission is hereby granted, free of charge,"))
       (is (str/ends-with? text "OTHER DEALINGS IN THE\nSOFTWARE.\n"))))
   (testing "the README draws the line"
-    (is (str/includes? (slurp "README.md") "## License"))))
+    (let [readme (slurp "README.md")]
+      (is (str/includes? readme "## License"))
+      (is (str/includes? readme "`trailers/`"))
+      (is (str/includes? readme "CC BY 3.0"))
+      (is (str/includes? readme "SIL Open Font License")))))

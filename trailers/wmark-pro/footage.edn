@@ -1,0 +1,26 @@
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
+;;
+;; The open footage behind the trailer (bb trailer-footage): two Blender
+;; Foundation trailers, released under Creative Commons Attribution 3.0
+;; ("Sharing", durian.blender.org and peach.blender.org), each pinned by
+;; SHA-256, and the clips cut from them for the app to watermark. The cuts
+;; leave out every title card, logo and credit: the films' logos and
+;; trademarks aren't covered by the licence. No people appear, only
+;; animation.
+{:downloads
+ [{:id      :sintel
+   :url     "https://download.blender.org/durian/trailer/sintel_trailer-1080p.mp4"
+   :sha256  "34bbd52a4b89fdf63c8ace50b268da26653a59508288100cd3c23de276db7931"
+   :credit  "Sintel, © copyright Blender Foundation | durian.blender.org, CC BY 3.0"}
+  {:id      :bbb
+   :url     "https://download.blender.org/peach/trailer/trailer_1080p.mov"
+   :sha256  "67a3abdfd142e6c32a1994960077a5669b59a5745adceac41de8de540736dc9f"
+   :credit  "Big Buck Bunny, (c) copyright 2008, Blender Foundation | www.bigbuckbunny.org, CC BY 3.0"}]
+
+ ;; each clip: its parts [from to] in seconds, joined; :crop takes away the
+ ;; letterbox
+ :clips
+ [{:out "sintel_dragon.mp4"         :from :sintel :parts [[23.80 34.80]]                :crop "1920:818:0:130"}
+  {:out "sintel_desert.mp4"         :from :sintel :parts [[4.60 8.70] [35.90 39.40]]   :crop "1920:818:0:130"}
+  {:out "big_buck_bunny_meadow.mp4" :from :bbb    :parts [[9.10 11.15] [13.22 16.55] [18.92 22.88] [24.96 26.64]]}]}
