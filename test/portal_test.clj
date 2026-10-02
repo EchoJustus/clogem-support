@@ -135,6 +135,48 @@
             (is (str/includes? html "name=\"color-scheme\""))))
         (is (str/includes? html "content=\"no-referrer\""))))))
 
+(deftest each-section-is-introduced-once
+  ;; the owner, 2026-10-02: no small overline repeating the heading under it
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [index]} (portal! pages)]
+    (is (not (str/includes? index "kicker")))
+    (doseq [[id title] [["open-source" (get-in site [:open-source :title])]
+                        ["apps" (get-in site [:commercial :title])]
+                        ["feedback" (get-in site [:feedback :title])]]]
+      (let [section (second (re-find (re-pattern (str "(?s)<section [^>]*id=\"" id "\"[^>]*>(.*?)<h2")) index))]
+        (is (= "" section) (str id ": the heading comes first in its section"))
+        (is (str/includes? index (str/replace title "&" "&amp;")))))))
+
+(deftest the-theme-switcher-takes-no-script
+  ;; Auto, Light and Dark as radio buttons the stylesheet reads with :has(),
+  ;; on both pages; Auto (the system's setting) is chosen when a page opens
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [index not-found]} (portal! pages)]
+    (doseq [[n html] {"index.html" index "404.html" not-found}]
+      (testing n
+        (let [radios (re-seq #"<input [^>]*name=\"theme\"[^>]*>" html)
+              style  (second (re-find #"(?s)<style>(.*?)</style>" html))]
+          (is (= ["theme-system" "theme-light" "theme-dark"] (map #(second (re-find #"id=\"([^\"]+)\"" %)) radios)))
+          (is (every? #(str/includes? % "type=\"radio\"") radios))
+          (is (= ["theme-system"] (keep #(when (str/includes? % " checked") (second (re-find #"id=\"([^\"]+)\"" %))) radios))
+              "Auto when the page opens")
+          (doseq [id ["system" "light" "dark"]]
+            (is (str/includes? html (str "<label for=\"theme-" id "\""))))
+          (is (re-find #"<fieldset class=\"theme\"><legend>Colour theme</legend>" html) "named for screen readers")
+          (testing "the stylesheet follows the system unless Light or Dark is chosen"
+            (is (str/includes? style "@media (prefers-color-scheme:dark){:root:not(:has(#theme-light:checked)){color-scheme:dark;--bg:#0D1016"))
+            (is (str/includes? style ":root:has(#theme-dark:checked){color-scheme:dark;--bg:#0D1016"))
+            (is (str/includes? style ":root:has(#theme-light:checked){color-scheme:light}")))
+          (testing "colours fade, unless the visitor asked for less motion"
+            (is (str/includes? style "@property --bg{syntax:\"<color>\""))
+            (is (re-find #":root\{color-scheme:light dark;[^}]*transition:--bg \.35s ease" style))
+            (is (re-find #"prefers-reduced-motion:reduce\)\{:root," style)))
+          (is (str/includes? style "@supports not selector(:has(*)){.theme{display:none}}")
+              "hidden where the browser can't apply it")
+          (is (not (str/includes? (str/lower-case html) "<script"))))))))
+
 (deftest an-app-is-listed-once-it-is-published
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)
