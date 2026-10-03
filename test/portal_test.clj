@@ -75,6 +75,7 @@
                      index))
         (is (str/includes? index (str "aria-label=\"Get Wmark Pro from the " store "\"")))
         (is (str/includes? index note))
+        (is (= "https://apps.microsoft.com/detail/9PMP1591Q78R" url) "Wmark Pro's live listing (2026-10-03)")
         (is (not (re-find #"(?i)microsoft[^\"<]*logo|<img [^>]*store" index)) "our own button, no store's logo")))
     (testing "the open-source projects, in site.edn's order, each with its icon and its source or its status"
       (let [projects (get-in site [:open-source :projects])

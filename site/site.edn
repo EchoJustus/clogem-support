@@ -46,9 +46,8 @@
  ;; The apps, in the order shown. An app is listed once its folder is on
  ;; gh-pages (its first publication); its icon comes from its own page
  ;; there. :accent is two colours from its icon, for the card's strip.
- ;; :store is where to get it: the Microsoft Store's address is a
- ;; placeholder until the listing is live, then
- ;; https://apps.microsoft.com/detail/9PMP1591Q78R (Store ID 9PMP1591Q78R).
+ ;; :store is where to get it: Wmark Pro's live Microsoft Store listing
+ ;; (Store ID 9PMP1591Q78R, live since 2026-10-03).
  :commercial
  {:title "Commercial software"
   :lead  "Apps built on the open core, with an interface made for creators. Each has its own support page and privacy policy."
@@ -60,7 +59,7 @@
    :about    "Watermarks whole batches of videos in ways that make AI watermark removal harder. For Windows."
    :accent   ["#7A63DC" "#EDBE6A"]
    :store    {:name "Microsoft Store"
-              :url  "https://apps.microsoft.com/"
+              :url  "https://apps.microsoft.com/detail/9PMP1591Q78R"
               :note "Windows 10 and 11 · x64 and Arm64"}}]
 
  ;; Feedback and support in the open: GitHub Discussions and issues in this
