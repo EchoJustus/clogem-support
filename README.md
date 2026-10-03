@@ -70,9 +70,9 @@ Each section opens with its heading alone, with no overline repeating it
   one gets a plain mark. The projects' icons are embedded from `icons/`,
   each checked to be a plain drawing (no script, nothing outside it).
 - **The store button** is our own (a bag we drew, no store's logo). Wmark
-  Pro's points at `https://apps.microsoft.com/`, a placeholder, until its
-  listing is live; then `:store :url` in `site.edn` becomes
-  `https://apps.microsoft.com/detail/9PMP1591Q78R`.
+  Pro's points at its live listing,
+  `https://apps.microsoft.com/detail/9PMP1591Q78R` (`:store :url` in
+  `site.edn`).
 - Like the apps' pages, each page is one self-contained file:
   - no JavaScript, no cookies, nothing loaded from another site;
   - a Content-Security-Policy that allows only the page's own style (by its
