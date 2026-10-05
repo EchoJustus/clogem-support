@@ -72,8 +72,9 @@
 (defn- build-all!
   [trailer sources quality work name {:keys [edl spec marks cards] tl :timeline :as made}]
   (let [src     (fn [f] (let [p (fs/file sources f)] (when-not (fs/exists? p) (fail! "Missing source" (str p))) (str p)))
-        files   {:take (src "take.mkv") :dragon (src "sintel_dragon_wm.mp4") :desert (src "sintel_desert_wm.mp4")
-                 :meadow (src "big_buck_bunny_meadow_wm.mp4") :icon (src "icon.png")}
+        ;; the edit list names its sources: {:orchard "orchard_aerial_wm.mp4" ...}
+        files   (into {:take (src "take.mkv") :icon (src "icon.png")}
+                      (for [[id f] (:sources edl)] [id (src f)]))
         edl     (assoc edl :fonts {:regular (src "fonts/OpenSans-400.ttf") :semibold (src "fonts/OpenSans-600.ttf")
                                    :bold (src "fonts/OpenSans-700.ttf")})
         words   (word-files! (:words spec) (fs/file work "words"))

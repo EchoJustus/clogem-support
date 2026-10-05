@@ -27,7 +27,7 @@ The site is this repository's `gh-pages` branch, served by GitHub Pages
 | On gh-pages | What it is | Who writes it |
 |---|---|---|
 | `index.html`, `404.html`, `.nojekyll` | the front page, the page for missing addresses, and "serve the files as they are" | `portal.yml` here, from `site/site.edn` |
-| `<app>/` (`wmark-pro/`, ...) | each app's support and privacy page | that app's own repository, through its publishing workflow |
+| `<app>/` (`wmark-pro/`, ...) | each app's page: what it is and does, its support and its privacy policy | that app's own repository, through its publishing workflow |
 
 `main` holds only the sources: GitHub counts languages on the default
 branch, so built HTML never shows up there.
@@ -44,15 +44,16 @@ GitHub refuse anything else.
 
 ### The front page
 
-Three parts, in this order (owner, 2026-10-02):
+Three parts, in this order (owner, 2026-10-02; the apps first since
+2026-10-05):
 
-1. **Open-source core software:** clogem-hstry, clogem-press and
+1. **Commercial software:** the apps, each with a button to its store
+   (the Microsoft Store for Wmark Pro), its page (features and support)
+   and its policy, and a note that tools like clogem-press will get Pro
+   editions as they mature.
+2. **Open-source core software:** clogem-hstry, clogem-press and
    clogem-wmark, each with its icon and a link to its source (or, while
    the source isn't public, a line that says so).
-2. **Commercial software:** the apps, each with a button to its store
-   (the Microsoft Store for Wmark Pro), its support page and its policy,
-   and a note that tools like clogem-press will get Pro editions as they
-   mature.
 3. **Feedback & support:** the Discussions categories and the bug report
    form (below, "Feedback"), and the business address for what shouldn't
    be public.
@@ -163,7 +164,7 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
 
 | Trailer | |
 |---|---|
-| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 60 s, captions in 18 languages |
+| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 55 s, captions in 18 languages |
 
 ## License
 
@@ -173,9 +174,10 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
   licences: clogem-wmark's and clogem-press's are EPL-2.0
   (`icons/EPL-2.0.txt`), clogem-hstry's is all rights reserved
   (`icons/README.md`).
-- **Third-party parts** keep their own licences: the open films' footage
-  in `trailers/` is © Blender Foundation under CC BY 3.0, and the fonts in
-  `trailers/*/sources/fonts/` are under the SIL Open Font License 1.1
+- **Third-party parts** keep their own licences: the footage in
+  `trailers/` is the U.S. Bureau of Land Management's, public domain,
+  and the fonts in `trailers/*/sources/fonts/` are under the
+  SIL Open Font License 1.1
   (each trailer's README credits them).
 - **Everything else:** © 2026 EchoJustus, all rights reserved. That covers
   the words in `site/`, every page on the `gh-pages` branch (including the

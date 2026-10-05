@@ -122,16 +122,21 @@
 
 (deftest the-footage-recipe
   (let [{:keys [downloads clips]} (edn/read-string (slurp (str dir "/footage.edn")))]
-    (testing "each source pinned, from the Blender Foundation, with its credit"
-      (doseq [{:keys [url sha256 credit]} downloads]
-        (is (str/starts-with? url "https://download.blender.org/"))
+    (testing "each source pinned, from Wikimedia Commons, with its page and credit"
+      (doseq [{:keys [url page sha256 credit]} downloads]
+        (is (str/starts-with? url "https://upload.wikimedia.org/"))
+        (is (str/starts-with? page "https://commons.wikimedia.org/wiki/File:"))
         (is (re-matches #"[0-9a-f]{64}" sha256))
-        (is (str/includes? credit "CC BY 3.0"))))
-    (testing "the clips are cut from those sources, the letterbox cropped away"
+        (is (str/includes? credit "public domain"))))
+    (testing "the clips are cut from those sources: silent, cropped, scaled and retimed where asked"
       (is (every? (set (map :id downloads)) (map :from clips)))
-      (let [args (footage/cut-args "in.mp4" {:out "o.mp4" :parts [[1 2] [3 4]] :crop "1920:818:0:130"} "d")]
-        (is (str/includes? (nth args 7) "concat=n=2:v=1:a=1"))
-        (is (str/includes? (nth args 7) "crop=1920:818:0:130"))))))
+      (let [args (footage/cut-args "in.mp4" {:out "o.mp4" :parts [[1 2] [3 4]] :crop "1920:818:0:130"
+                                             :scale "1920:1080" :fps 30} "d")]
+        (is (str/includes? (nth args 7) "concat=n=2:v=1:a=0"))
+        (is (str/includes? (nth args 7) "crop=1920:818:0:130,scale=1920:1080:flags=lanczos,fps=30"))
+        (is (some #{"-an"} args))))
+    (testing "a download keeps its URL's file name, decoded"
+      (is (= "A_(1).webm" (footage/file-name "https://example.org/a/A_%281%29.webm"))))))
 
 (deftest the-committed-trailer-meets-the-store
   (if-not ffmpeg?

@@ -89,10 +89,11 @@
                 (is (str/includes? index (str "Open source · " license))))
             (is (str/includes? index (str/replace status "'" "&apos;")))))
         (is (= (count projects) (count (re-seq #"<img [^>]*class=\"app-icon\" [^>]*src=\"data:image/(?:svg\+xml|png);base64,"
-                                               (subs index (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"")))))
+                                               (subs index (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"feedback\"")))))
             "every project's icon, embedded")))
-    (testing "open source first, then the commercial apps with the note about Pro editions to come"
-      (is (< (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"") (str/index-of index "id=\"feedback\"")))
+    (testing "the commercial apps first (owner, 2026-10-05), with the note about Pro editions to come, then open source"
+      (is (< (str/index-of index "id=\"apps\"") (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"feedback\"")))
+      (is (< (str/index-of index "href=\"#apps\"") (str/index-of index "href=\"#open-source\"")) "and so do the jump links")
       (is (str/includes? index (get-in site [:commercial :title])))
       (is (str/includes? index (get-in site [:commercial :note]))))
     (testing "feedback in the open: each channel opens its discussion category or issue form"
@@ -455,7 +456,8 @@
     (doseq [d (fs/glob "trailers" "*" {:max-depth 1}) :when (fs/directory? d)]
       (let [readme (slurp (str (fs/path d "README.md")))]
         (is (str/includes? readme "All rights reserved") (str d))
-        (is (str/includes? readme "CC BY 3.0") (str d))))
+        ;; the footage's own terms: public domain, or a Creative Commons licence
+        (is (re-find #"public domain|CC BY" readme) (str d))))
     (doseq [fonts (fs/glob "trailers" "*/sources/fonts")]
       (is (fs/exists? (fs/path fonts "OFL.txt")) "the fonts travel with their licence")))
   (testing "LICENSE is the MIT text as it stands, so GitHub recognises it"
@@ -466,5 +468,5 @@
     (let [readme (slurp "README.md")]
       (is (str/includes? readme "## License"))
       (is (str/includes? readme "`trailers/`"))
-      (is (str/includes? readme "CC BY 3.0"))
+      (is (re-find #"public domain|CC BY" readme) "the footage's terms")
       (is (str/includes? readme "SIL Open Font License")))))

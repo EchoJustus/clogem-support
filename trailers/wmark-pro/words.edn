@@ -22,8 +22,8 @@
  {;; on screen only, never translated: the product's name and the credits
   :name      {"en" "Wmark Pro"}
   :tagline   {"en" "Video Watermarker"}
-  :credits   {"en" "Footage: Sintel and Big Buck Bunny, © Blender Foundation (sintel.org, bigbuckbunny.org), CC BY 3.0, watermarked for this demo."}
-  :credits-2 {"en" "Not affiliated with or endorsed by the Blender Foundation. Music made for this trailer."}
+  :credits   {"en" "Footage: U.S. Bureau of Land Management (Steens Mountain time-lapse, Horning Seed Orchard aerial), public domain, watermarked for this demo."}
+  :credits-2 {"en" "Not affiliated with or endorsed by the Bureau of Land Management. Music made for this trailer."}
 
   :music
   {"en" "[Calm electronic music]"
@@ -244,6 +244,46 @@
    "de" "Jedes Video bekommt sein eigenes Timing"
    "id" "Setiap video mendapat waktunya sendiri"
    "it" "Ogni video ha i suoi tempi"}
+
+  :spots
+  {"en" "Random text that keeps to the spots you choose"
+   "fr" "Un texte aléatoire, aux emplacements\nque vous choisissez"
+   "zh-Hans" "随机文字只出现在您选定的位置"
+   "zh-Hant" "隨機文字只出現在您選定的位置"
+   "ru" "Случайный текст — только\nв выбранных вами местах"
+   "ja" "ランダム表示は選んだ位置だけに"
+   "ko" "무작위 텍스트는 고른 위치에만"
+   "ar" "نص عشوائي يلتزم بالمواضع التي تختارها"
+   "ta" "நீங்கள் தேர்ந்த இடங்களுக்குள் மட்டும்\nசீரற்ற உரை"
+   "sv" "Slumpvis text som håller sig till\nplatserna du väljer"
+   "ms" "Teks rawak yang kekal di tempat\nyang anda pilih"
+   "fi" "Satunnainen teksti pysyy\nvalitsemissasi paikoissa"
+   "hi" "रैंडम टेक्स्ट, सिर्फ़ आपकी चुनी जगहों पर"
+   "es" "Texto aleatorio que se queda en los\npuntos que elijas"
+   "pt" "Texto aleatório que fica nos pontos\nque você escolher"
+   "de" "Zufälliger Text, nur an den Stellen,\ndie Sie wählen"
+   "id" "Teks acak yang tetap di tempat\nyang Anda pilih"
+   "it" "Testo casuale che resta nei punti\nche scegli"}
+
+  :spots-sub
+  {"en" "Choose Random, then click where it may appear"
+   "fr" "Choisissez Aléatoire, puis cliquez\nlà où il peut apparaître"
+   "zh-Hans" "先选“随机”，再点选它可以出现的位置"
+   "zh-Hant" "先選「隨機」，再點選它可以出現的位置"
+   "ru" "Выберите «Случайно», затем отметьте,\nгде он может появляться"
+   "ja" "「ランダム」を選び、表示してよい位置をクリック"
+   "ko" "'무작위'를 고른 뒤 나타날 위치를 클릭하세요"
+   "ar" "اختر «عشوائي» ثم انقر على المواضع\nالتي قد يظهر فيها"
+   "ta" "\"சீரற்றது\" என்பதைத் தேர்ந்து, அது\nதோன்றும் இடங்களைச் சொடுக்குங்கள்"
+   "sv" "Välj Slumpad och klicka sedan där\nden får synas"
+   "ms" "Pilih Rawak, kemudian klik tempat\nia boleh muncul"
+   "fi" "Valitse Satunnainen ja napsauta\npaikat, joissa se saa näkyä"
+   "hi" "\"यादृच्छिक\" चुनें, फिर वे जगहें\nक्लिक करें जहाँ वह दिख सकता है"
+   "es" "Elige Aleatoria y haz clic donde\npuede aparecer"
+   "pt" "Escolha Aleatória e clique onde\nele pode aparecer"
+   "de" "„Zufällig“ wählen, dann die Stellen\nanklicken, an denen er erscheinen darf"
+   "id" "Pilih Acak, lalu klik tempat\nteks boleh muncul"
+   "it" "Scegli Casuale, poi fai clic dove\npuò comparire"}
 
   :try
   {"en" "Try three renders free"
