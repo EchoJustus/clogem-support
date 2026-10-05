@@ -15,11 +15,11 @@
   any address that isn't there. .github/workflows/portal.yml publishes the
   root files alone and leaves the apps' folders as they are.
 
-  The front page has three parts: the open-source projects (each with its
-  icon from icons/ and a link to its source), the commercial apps (each
-  with where to get it, its support page and its policy), and feedback and
-  support in the open, through this repository's GitHub Discussions and
-  issue forms (.github/).
+  The front page has three parts: the commercial apps (each with where to
+  get it, its page and its policy), the open-source projects (each with
+  its icon from icons/ and a link to its source), and feedback and support
+  in the open, through this repository's GitHub Discussions and issue
+  forms (.github/). The apps come first (owner, 2026-10-05).
 
   Like the apps' pages: one self-contained file each, no JavaScript, nothing
   loaded from another site, and a Content-Security-Policy that allows only
@@ -487,12 +487,12 @@
        [:span [:small "Download from the"] [:strong (:name store)]]]
       [:span.store-note (:note store)]])
    [:nav.links {:aria-label (str name " links")}
-    [:a.primary {:href (str folder "/")} "Support & contact"]
+    [:a.primary {:href (str folder "/")} "Features & support"]
     [:a {:href (str folder "/#privacy")} "Privacy policy"]
     [:a {:href "#feedback"} "Feedback"]]])
 
 (defn index-page
-  "The front page: the open-source projects, the commercial apps, then
+  "The front page: the commercial apps, the open-source projects, then
   feedback and support. `projects` carry their icons (project-icons)."
   [site projects apps year]
   (let [style (css apps projects)
@@ -506,14 +506,10 @@
        [:body
         [:div.page
          (header site [:nav.jump {:aria-label "On this page"}
-                       [:a {:href "#open-source"} "Open source"]
                        [:a {:href "#apps"} "Apps"]
+                       [:a {:href "#open-source"} "Open source"]
                        [:a {:href "#feedback"} "Feedback & support"]])
          [:main
-          [:section#open-source {:aria-labelledby "open-source-title"}
-           [:h2#open-source-title (:title os)]
-           [:p.section-lead (:lead os)]
-           [:div.projects (map project-card projects)]]
           [:section#apps {:aria-labelledby "apps-title"}
            [:h2#apps-title (:title com)]
            [:p.section-lead (:lead com)]
@@ -521,6 +517,10 @@
            [:aside.next {:aria-label "Coming later"}
             [:span.chip "Later"]
             [:p (:note com)]]]
+          [:section#open-source {:aria-labelledby "open-source-title"}
+           [:h2#open-source-title (:title os)]
+           [:p.section-lead (:lead os)]
+           [:div.projects (map project-card projects)]]
           [:section#feedback {:aria-labelledby "feedback-title"}
            [:h2#feedback-title (:title fb)]
            [:p.section-lead (:lead fb)]

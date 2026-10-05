@@ -89,10 +89,11 @@
                 (is (str/includes? index (str "Open source · " license))))
             (is (str/includes? index (str/replace status "'" "&apos;")))))
         (is (= (count projects) (count (re-seq #"<img [^>]*class=\"app-icon\" [^>]*src=\"data:image/(?:svg\+xml|png);base64,"
-                                               (subs index (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"")))))
+                                               (subs index (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"feedback\"")))))
             "every project's icon, embedded")))
-    (testing "open source first, then the commercial apps with the note about Pro editions to come"
-      (is (< (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"apps\"") (str/index-of index "id=\"feedback\"")))
+    (testing "the commercial apps first (owner, 2026-10-05), with the note about Pro editions to come, then open source"
+      (is (< (str/index-of index "id=\"apps\"") (str/index-of index "id=\"open-source\"") (str/index-of index "id=\"feedback\"")))
+      (is (< (str/index-of index "href=\"#apps\"") (str/index-of index "href=\"#open-source\"")) "and so do the jump links")
       (is (str/includes? index (get-in site [:commercial :title])))
       (is (str/includes? index (get-in site [:commercial :note]))))
     (testing "feedback in the open: each channel opens its discussion category or issue form"
