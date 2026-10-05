@@ -1,87 +1,80 @@
 ;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
 ;; Not covered by the MIT license: see the README, "License".
 ;;
-;; The cut of the Wmark Pro trailer (trailer.edit). Sources, by name:
-;;   :take    the app, recorded from recording.edn (its marks name the times)
-;;   :dragon  sintel_dragon_wm.mp4  } rendered by the app during the take:
-;;   :desert  sintel_desert_wm.mp4  } open films, watermarked with its
-;;   :meadow  big_buck_bunny_meadow_wm.mp4 } "Studio release" profile
-;;   :icon    the app's icon, 1024 px PNG
-;; Times are seconds, or [mark offset] in the take. Card words are ids in
-;; words.edn; :upper cards sit near the top, out of the app's way.
+;; The cut of the Wmark Pro trailer (trailer.edit). Sources, by name: the
+;; take (:take, recorded from recording.edn; its marks name the times), the
+;; app's icon (:icon), and the copies the app rendered during the take with
+;; its "Studio release" profile, named under :sources. Times are seconds, or
+;; [mark offset] in the take. Card words are ids in words.edn; :upper cards
+;; sit near the top, out of the app's way.
+;;
+;; The owner's direction (2026-10-05): the canary shown once or twice at
+;; most; the batch shown by its progress bars, not the finished list; the
+;; random spots set up in a close-up, then shown moving in a rendered copy,
+;; never in the live preview; clean landscape footage. In these copies the
+;; canary falls at 3.80 s and 9.81 s (orchard) and 5.64 s (clouds): every
+;; part below stops short of them but the one held for its card.
 {:crossfade 0.4
+ :sources {:orchard "orchard_aerial_wm.mp4"
+           :clouds  "steens_clouds_wm.mp4"}
  :segments
- [;; the result first: a watermarked film, its logo flipping. Its canary
-  ;; frames (three frames every 2 s in the app's profile) are frozen for a
-  ;; second each, so they read as text rather than a glitch
+ [;; the result first: a watermarked time-lapse, the logo flipping, the
+  ;; random text at its keyed moments (no canary before 5.64 s)
   {:id :open
-   :fit :letterbox
-   :parts [{:from :dragon :in 2.40 :out 4.15}
-           {:from :dragon :hold {:at 4.15 :for 1.0}}
-           {:from :dragon :in 4.15 :out 6.15}
-           {:from :dragon :hold {:at 6.15 :for 1.0}}
-           {:from :dragon :in 6.15 :out 7.00}]
+   :parts [{:from :clouds :in 0.0 :out 5.5}]
    :cards [{:text :open :from 0.6 :until -0.45}]}
 
   {:id :title
    :title {:length 3.6
-           :background {:from :dragon :at 5.5}
+           :background {:from :clouds :at 3.0}
            :lines [{:word :name    :font :bold    :size 112 :color "white"    :y 560}
                    {:word :tagline :font :regular :size 50  :color "0xE6DEFF" :y 700}]}}
 
-  ;; the app: a batch of three (the file dialog between the parts is cut)
+  ;; the app: a batch of two (the file dialog between the parts is cut)
   {:id :batch
    :parts [{:from :take :in [:start 0.6] :out [:add-videos 0.7]}
-           {:from :take :in [:videos-added 0.1] :out [:pick 2.7] :speed 1.25}]
+           {:from :take :in [:videos-added 0.1] :out [:scrub -0.2] :speed 1.25}]
    :cards [{:text :batch :from 0.5 :until -0.4 :place :upper}]}
 
   ;; scrubbing the preview: the logo flips at its keyed moments
   {:id :flip
-   :zoom [100 56 1220 686]
-   :parts [{:from :take :in [:scrub -0.1] :out [:text -0.3] :speed 1.6}]
+   :zoom [176 34 1064 598]
+   :parts [{:from :take :in [:scrub -0.1] :out [:scrub 7.3] :speed 1.6}]
    :cards [{:text :flip :sub :flip-sub :from 0.5 :until -0.4 :place :upper}]}
 
-  ;; warning text, typed in
+  ;; warning text, typed in and saved
   {:id :text
-   :zoom [100 56 1220 686]
-   :parts [{:from :take :in [:text -0.1] :out [:render -0.4] :speed 1.5}]
+   :parts [{:from :take :in [:text -0.1] :out [:text-applied 1.0] :speed 1.6}]
    :cards [{:text :text :from 0.4 :until -0.4 :place :upper}]}
 
-  ;; a canary frame, held so it can be read
-  {:id :canary
-   :fit :letterbox
-   :parts [{:from :dragon :in 7.30 :out 8.16}
-           {:from :dragon :hold {:at 8.15 :for 2.2}}
-           {:from :dragon :in 8.25 :out 9.30}]
-   :cards [{:text :canary :sub :canary-sub :from 0.45 :until -0.3}]}
+  ;; a close-up of the random layer: Position Random first, then three spots
+  {:id :spots
+   :zoom [900 380 1020 574]
+   :parts [{:from :take :in [:spots 1.2] :out [:spots-set 0.5] :speed 1.4}]
+   :cards [{:text :spots :sub :spots-sub :from 0.4 :until -0.4 :place :upper}]}
 
-  ;; render the batch, the wait sped up
+  ;; render the batch: the bars move, the wait sped up, cut before the list
+  ;; of finished copies
   {:id :render
-   :parts [{:from :take :in [:render -0.2] :out [:rendering 0.0]}
-           {:from :take :in [:rendering 0.0] :out [:rendered -0.3] :speed 9}
-           {:from :take :in [:rendered -0.3] :out [:end -0.2]}]
+   :zoom [0 292 1400 788]
+   :parts [{:from :take :in [:render -0.2] :out [:render 4.0]}
+           {:from :take :in [:render 4.0] :out [:rendering 30.6] :speed 9}]
    :cards [{:text :render :sub :render-sub :from 0.5 :until -0.4 :place :upper}]}
 
-  ;; the other two results: their canaries fall at their own moments, each
-  ;; frozen for a second so it can be read
+  ;; a rendered copy plays: the random text moves among the chosen spots
+  ;; (top left, top right, bottom centre); its one canary frame is held so
+  ;; it can be read
   {:id :results
-   :parts [{:from :meadow :in 5.90 :out 6.30}
-           {:from :meadow :hold {:at 6.30 :for 1.0}}
-           {:from :meadow :in 6.30 :out 8.30}
-           {:from :meadow :hold {:at 8.30 :for 1.0}}
-           {:from :meadow :in 8.30 :out 8.90}
-           {:from :desert :in 4.62 :out 5.10 :fit :letterbox}
-           {:from :desert :hold {:at 5.10 :for 1.0} :fit :letterbox}
-           {:from :desert :in 5.10 :out 7.10 :fit :letterbox}
-           {:from :desert :hold {:at 7.10 :for 1.0} :fit :letterbox}
-           ;; to the clip's end, so its canary is gone before the end card fades in
-           {:from :desert :in 7.10 :out 7.62 :fit :letterbox}]
-   :cards [{:text :timing :from 0.4 :until -0.4}]}
+   :parts [{:from :orchard :in 0.6 :out 3.78}
+           {:from :orchard :hold {:at 3.84 :for 2.4}}
+           {:from :orchard :in 3.92 :out 9.70}]
+   :cards [{:text :timing :from 0.3 :until 2.9}
+           {:text :canary :sub :canary-sub :from 3.3 :until 5.5}]}
 
   {:id :end
    :title {:length 5.8
            :end? true
-           :background {:from :desert :at 6.0}
+           :background {:from :clouds :at 8.0}
            :lines [{:word :name      :font :bold     :size 96 :color "white"    :y 390}
                    {:word :tagline   :font :regular  :size 44 :color "0xE6DEFF" :y 505}
                    {:word :try       :font :semibold :size 46 :color "0xFFE6B0" :y 610}

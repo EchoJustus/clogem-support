@@ -2,19 +2,22 @@
 <!-- Not covered by the MIT license: see "License" below and the repository's README. -->
 # Wmark Pro: the Store trailer
 
-A 60-second trailer (59.9 s) for **Wmark Pro: Video Watermarker** in the Microsoft
+A 55-second trailer (54.9 s) for **Wmark Pro: Video Watermarker** in the Microsoft
 Store, with closed captions in the eighteen languages of its Store
-listing. It shows the app at work on open films: a batch of three
-videos, the logo flipping in 3D, warning text, the canary frames, the
-render queue and the results. It ends on what watermarks can't do.
+listing. It shows the app at work on public-domain landscape footage: a
+batch of two videos, the logo flipping in 3D, warning text typed in,
+random text set to move among three chosen spots (a close-up of the
+setting), the render queue's progress, then a rendered copy playing,
+its text moving among those spots and its one canary frame held so it
+can be read. It ends on what watermarks can't do.
 
 | File | What it is |
 |---|---|
-| `wmark-pro-trailer.mp4` | the trailer: 1920×1080, 30 fps, H.264 High with AAC-LC stereo at 48 kHz, faststart, no edit lists; about 4 Mbps, so git can keep it |
+| `wmark-pro-trailer.mp4` | the trailer: 1920×1080, 30 fps, H.264 High with AAC-LC stereo at 48 kHz, faststart, no edit lists; about 7 Mbps (46 MB), so git can keep it |
 | `wmark-pro-trailer-thumbnail.png` | its thumbnail, 1920×1080: the title card |
 | `captions/wmark-pro-trailer.<lang>.vtt` | closed captions (WebVTT), one per listing language: `en fr zh-Hans zh-Hant ru ja ko ar ta sv ms fi hi es pt de id it` |
 | `recording.edn`, `edit.edn`, `words.edn`, `footage.edn` | how it was made: the take's script, the cut, every word in every language, the open footage |
-| `sources/` | what the cut is made from: the take (`take.mkv` and its marks), the three films the app watermarked in it, the app's icon, and the fonts |
+| `sources/` | what the cut is made from: the take (`take.mkv` and its marks), the two clips the app watermarked in it, the app's icon, and the fonts |
 
 ## Uploading it to Partner Center
 
@@ -54,25 +57,32 @@ optional. One could be made later as an MP3 reading out the cards.
 
 ## How it was made
 
-1. **Footage.** Clips from the trailers of two Blender Foundation open
-   films, *Sintel* and *Big Buck Bunny*, released under Creative Commons
-   Attribution 3.0 (`footage.edn`, `bb trailer-footage`). The cuts leave
-   out every title card, logo and credit, since the films' logos and
-   trademarks aren't covered by the licence. Only animation appears, no
-   people.
+1. **Footage.** Two clips the U.S. Bureau of Land Management published
+   (BLM Oregon & Washington), works of the United States government and
+   so in the public domain, taken from Wikimedia Commons and pinned by
+   SHA-256 (`footage.edn`, `bb trailer-footage`): a time-lapse of clouds
+   over Steens Mountain and a drone's view of the Horning Seed Orchard.
+   Landscapes only, no faces. Since 2026-10-05 they replace the Blender
+   films of the first cut (the owner's direction: cleaner, professional
+   footage).
 2. **The take.** The app's Linux build ran on a virtual 1920×1080 display
    (Xvfb). `scripts/trailer/record.clj` drove it the way a person would:
    the pointer glides, clicks land, words are typed a key at a time,
    through X11's XTest from Clojure with the JDK's foreign function
    interface. FFmpeg's `x11grab` recorded it (`recording.edn`, `clojure
    -M:record`). Pro was unlocked for the take, so the canary frames are
-   real. The app watermarked the three clips with its "Studio release"
-   profile, and the results are in `sources/`.
+   real. The app watermarked the two clips with its "Studio release"
+   profile (the logo, warning text, random text among three spots, a
+   canary every 6 s), and the results are in `sources/`.
 3. **The cut.** `scripts/trailer/edit.clj` cuts the take on its marks,
-   speeds up the waits, freezes every canary frame so it can be read (2.2 s
-   for the one the canary card explains, 1 s for each of the others, which
-   the app draws for three frames every 2 s), crossfades the segments
-   and lays the cards over them (`edit.edn`, `words.edn`). The title card
+   speeds up the waits, zooms into the stage and the random layer's
+   settings, crossfades the segments and lays the cards over them
+   (`edit.edn`, `words.edn`). The owner's direction (2026-10-05) shapes
+   it: the canary appears once, frozen for 2.4 s under its card, and
+   every other part stops short of the copies' canary frames; the batch
+   is shown by its progress bars, cut before the list of finished files;
+   the random text is seen moving in a rendered copy, never in the live
+   preview. The title card
    uses the app's icon and Open Sans.
 4. **Sound.** `scripts/trailer/music.clj` synthesizes the music with
    FFmpeg (chords, bass and an arpeggio, made for this trailer) and brings
@@ -98,11 +108,12 @@ is called canary. It doesn't promise that removal is impossible.
 
 ## Credits
 
-- *Sintel*: © copyright Blender Foundation, durian.blender.org, CC BY 3.0.
-- *Big Buck Bunny*: (c) copyright 2008, Blender Foundation,
-  www.bigbuckbunny.org, CC BY 3.0.
+- *Time Lapse Clouds above Steens Mountain* and *BLM drone training above
+  Horning Seed Orchard*: U.S. Bureau of Land Management (BLM Oregon &
+  Washington), public domain, via Wikimedia Commons (`footage.edn` links
+  each file's page).
 - Both watermarked for this demonstration. Not affiliated with or endorsed
-  by the Blender Foundation.
+  by the Bureau of Land Management.
 - Open Sans: Copyright 2020 The Open Sans Project Authors, SIL Open Font
   License 1.1 (`sources/fonts/OFL.txt`).
 - Music: made for this trailer.
@@ -111,9 +122,8 @@ is called canary. It doesn't promise that removal is impossible.
 
 - **The trailer** (the video, its thumbnail, captions, words, cut, take,
   the app's icon and its UI): © 2026 EchoJustus. All rights reserved.
-- **The films' footage** in it and in `sources/` stays © Blender
-  Foundation under CC BY 3.0 (credits above). Our watermarks over it are
-  ours.
+- **The footage** in it and in `sources/` is in the public domain
+  (credits above). Our watermarks over it are ours.
 - **The fonts** in `sources/fonts/`: SIL Open Font License 1.1.
 - **The toolchain** that made it (`scripts/trailer/`,
   `test/trailer_test.clj`, `deps.edn`): MIT, like the rest of the code

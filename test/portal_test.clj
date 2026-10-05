@@ -455,7 +455,8 @@
     (doseq [d (fs/glob "trailers" "*" {:max-depth 1}) :when (fs/directory? d)]
       (let [readme (slurp (str (fs/path d "README.md")))]
         (is (str/includes? readme "All rights reserved") (str d))
-        (is (str/includes? readme "CC BY 3.0") (str d))))
+        ;; the footage's own terms: public domain, or a Creative Commons licence
+        (is (re-find #"public domain|CC BY" readme) (str d))))
     (doseq [fonts (fs/glob "trailers" "*/sources/fonts")]
       (is (fs/exists? (fs/path fonts "OFL.txt")) "the fonts travel with their licence")))
   (testing "LICENSE is the MIT text as it stands, so GitHub recognises it"
@@ -466,5 +467,5 @@
     (let [readme (slurp "README.md")]
       (is (str/includes? readme "## License"))
       (is (str/includes? readme "`trailers/`"))
-      (is (str/includes? readme "CC BY 3.0"))
+      (is (re-find #"public domain|CC BY" readme) "the footage's terms")
       (is (str/includes? readme "SIL Open Font License")))))

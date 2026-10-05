@@ -4,46 +4,59 @@
 ;; The take behind the Wmark Pro trailer (trailer.record): the app on a
 ;; 1920x1080 display, its "Studio release" profile already saved (a logo
 ;; that flips every three seconds, warning text that says "Sample" until the
-;; take types it in, a gold canary in the centre), three clips in ~/Videos
-;; and the logo in ~/Pictures. Coordinates are the app's at that
-;; size. The file dialog is the operating system's: the edit cuts it.
+;; take types it in, random text at a fixed spot until the take lets it
+;; move among three, a gold canary in the centre), two clips in ~/Videos
+;; and the logo in ~/Pictures. Coordinates are the app's at that size, in
+;; the Standard style, light. The file dialog is the operating system's:
+;; the edit cuts it. Drafts are saved by hand (auto-save is off by default).
 {:window "(?i)wmark"
  :size   [1920 1080]
  :fps    30
  :steps
  [[:mark :start]
   [:move 900 450 600] [:wait 2200]
-  ;; a batch of three videos
+  ;; a batch of two videos
   [:mark :add-videos]
-  [:click 155 742] [:wait 1300]
+  [:click 154 742] [:wait 1300]
   [:click 468 189] [:wait 900]
   [:double 615 239] [:wait 1200]
   [:click 700 214] [:wait 250]
-  [:shift-click 700 264] [:wait 400]
+  [:shift-click 700 239] [:wait 400]
   [:click 1447 928]
   [:mark :videos-added]
   [:move 620 520 700] [:wait 2600]
-  ;; the dragon on the stage
-  [:mark :pick]
-  [:click 132 887] [:wait 2600]
   ;; scrub: the logo flips, keyed to the video
   [:mark :scrub]
-  [:drag 44 628 1250 628 7000] [:wait 1800]
-  ;; warning text, typed in
+  [:drag 44 628 1250 628 7000] [:wait 1500]
+  ;; warning text, typed in; tapping outside keeps it, Save saves it
   [:mark :text]
-  [:click 710 742] [:wait 1200]
+  [:scroll 1670 700 :down 8] [:wait 900]
+  [:click 1522 600] [:wait 1000]
   [:keys "Control_L" "a"] [:wait 300]
-  [:type "Watermarked sample, not for reuse"] [:wait 600]
-  [:click 1126 596]
+  [:type "Watermarked sample, not for reuse"] [:wait 500]
+  [:click 1557 453] [:wait 1200]
+  [:click 1858 135]
   [:mark :text-applied]
-  [:move 760 430 800] [:wait 3200]
+  [:move 760 430 800] [:wait 2400]
   [:shot "text"]
+  ;; random text: Position Random first, then the spots it may jump among
+  [:mark :spots]
+  [:scroll 1670 700 :down 15] [:wait 1000]
+  [:move 1560 700 600] [:wait 500]
+  [:click 1593 772] [:wait 1300]
+  [:click 1486 871] [:wait 700]
+  [:click 1539 871] [:wait 700]
+  [:click 1512 913] [:wait 1300]
+  [:shot "spots"]
+  [:click 1858 135]
+  [:mark :spots-set]
+  [:move 1300 900 900] [:wait 1200]
   ;; render the batch
   [:mark :render]
   [:click 1368 1028] [:wait 1500]
   [:scroll 700 700 :down 6] [:wait 1500]
   [:mark :rendering]
-  [:wait 34000]
+  [:wait 70000]
   [:shot "rendered"]
   [:mark :rendered]
   [:wait 2500]

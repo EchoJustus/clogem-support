@@ -163,7 +163,7 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
 
 | Trailer | |
 |---|---|
-| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 60 s, captions in 18 languages |
+| Wmark Pro: Video Watermarker | [`trailers/wmark-pro`](trailers/wmark-pro/README.md): 55 s, captions in 18 languages |
 
 ## License
 
@@ -173,9 +173,10 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
   licences: clogem-wmark's and clogem-press's are EPL-2.0
   (`icons/EPL-2.0.txt`), clogem-hstry's is all rights reserved
   (`icons/README.md`).
-- **Third-party parts** keep their own licences: the open films' footage
-  in `trailers/` is © Blender Foundation under CC BY 3.0, and the fonts in
-  `trailers/*/sources/fonts/` are under the SIL Open Font License 1.1
+- **Third-party parts** keep their own licences: the footage in
+  `trailers/` is the U.S. Bureau of Land Management's, public domain,
+  and the fonts in `trailers/*/sources/fonts/` are under the
+  SIL Open Font License 1.1
   (each trailer's README credits them).
 - **Everything else:** © 2026 EchoJustus, all rights reserved. That covers
   the words in `site/`, every page on the `gh-pages` branch (including the

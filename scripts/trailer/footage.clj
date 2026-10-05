@@ -7,8 +7,9 @@
 
   reads the trailer's footage.edn, downloads each source once with curl
   (into target/footage), checks it against its SHA-256 and cuts the clips into
-  DIR (default target/footage/clips): the parts joined, cropped where the
-  list says, H.264 and AAC, ready to add to the app."
+  DIR (default target/footage/clips): the parts joined, cropped, scaled and
+  retimed where the list says, H.264 and silent (the trailer's sound is its
+  own music), ready to add to the app."
   (:require [babashka.fs :as fs]
             [babashka.process :as p]
             [clojure.edn :as edn]
@@ -23,32 +24,45 @@
       (loop [] (let [n (.read in buf)] (when (pos? n) (.update md buf 0 n) (recur)))))
     (apply str (map #(format "%02x" (bit-and % 0xff)) (.digest md)))))
 
+(defn file-name
+  "The download's file name: its URL's last part, percent-decoded."
+  [url]
+  (java.net.URLDecoder/decode ^String (last (str/split url #"/")) "UTF-8"))
+
 (defn fetch!
   "The download in `dir`, fetched when missing, and checked."
   [{:keys [url sha256] :as d} dir]
-  (let [f (fs/file dir (last (str/split url #"/")))]
+  (let [f (fs/file dir (file-name url))]
     (when-not (fs/exists? f)
       (fs/create-dirs dir)
       (println "Downloading" url)
-      ;; curl, which follows the system's proxy settings
-      (p/shell "curl" "-fsSL" "--retry" "3" "-o" (str f) url))
+      ;; curl, which follows the system's proxy settings; Wikimedia asks
+      ;; for a User-Agent that says who is asking, and answers bursts with
+      ;; 429, which --retry waits out
+      (p/shell "curl" "-fsSL" "--retry" "6" "--retry-delay" "20"
+               "-A" "clogem-support-trailer (https://github.com/EchoJustus/clogem-support)"
+               "-o" (str f) url))
     (let [got (trailer.footage/sha256 f)]
       (when-not (= sha256 got)
         (throw (ex-info (str (fs/file-name f) " isn't the pinned file: SHA-256 " got) {:download d}))))
     (str f)))
 
 (defn cut-args
-  "FFmpeg's arguments for one clip from `src`."
-  [src {:keys [parts crop out]} dir]
+  "FFmpeg's arguments for one clip from `src`: the parts joined, then
+  :crop, :scale (\"1920:1080\") and :fps where given. No sound: some sources
+  have none, and the trailer lays its own music under everything."
+  [src {:keys [parts crop scale fps out]} dir]
   (let [n     (count parts)
         trims (str/join ";" (for [[i [a b]] (map-indexed vector parts)]
-                              (str "[0:v]trim=" a ":" b ",setpts=PTS-STARTPTS[v" i "];"
-                                   "[0:a]atrim=" a ":" b ",asetpts=PTS-STARTPTS[a" i "]")))
-        join  (str (apply str (for [i (range n)] (str "[v" i "][a" i "]"))) "concat=n=" n ":v=1:a=1[vc][ac]")
-        video (if crop (str ";[vc]crop=" crop "[v]") ";[vc]null[v]")]
+                              (str "[0:v]trim=" a ":" b ",setpts=PTS-STARTPTS[v" i "]")))
+        join  (str (apply str (for [i (range n)] (str "[v" i "]"))) "concat=n=" n ":v=1:a=0[vc]")
+        looks (remove nil? [(when crop (str "crop=" crop))
+                            (when scale (str "scale=" scale ":flags=lanczos"))
+                            (when fps (str "fps=" fps))])
+        video (str ";[vc]" (if (seq looks) (str/join "," looks) "null") "[v]")]
     ["ffmpeg" "-v" "error" "-y" "-i" (str src) "-filter_complex" (str trims ";" join video)
-     "-map" "[v]" "-map" "[ac]" "-c:v" "libx264" "-crf" "16" "-preset" "slow" "-pix_fmt" "yuv420p"
-     "-c:a" "aac" "-b:a" "192k" "-movflags" "+faststart" (str (fs/file dir out))]))
+     "-map" "[v]" "-an" "-c:v" "libx264" "-crf" "16" "-preset" "slow" "-pix_fmt" "yuv420p"
+     "-movflags" "+faststart" (str (fs/file dir out))]))
 
 (defn -main [& args]
   (let [opts    (into {} (map (fn [[k v]] [(keyword (subs k 2)) v])) (partition 2 args))

@@ -1,26 +1,28 @@
 ;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
 ;; Not covered by the MIT license: see the README, "License".
 ;;
-;; The open footage behind the trailer (bb trailer-footage): two Blender
-;; Foundation trailers, released under Creative Commons Attribution 3.0
-;; ("Sharing", durian.blender.org and peach.blender.org), each pinned by
-;; SHA-256, and the clips cut from them for the app to watermark. The cuts
-;; leave out every title card, logo and credit: the films' logos and
-;; trademarks aren't covered by the licence. No people appear, only
-;; animation.
+;; The open footage behind the trailer (bb trailer-footage): two clips the
+;; U.S. Bureau of Land Management (BLM Oregon & Washington) published, works
+;; of the United States government and so in the public domain, taken from
+;; Wikimedia Commons and each pinned by SHA-256, and the clips cut from them
+;; for the app to watermark. Landscapes only: a time-lapse of clouds over
+;; Steens Mountain and a drone's view of the Horning Seed Orchard. The
+;; orchard clip starts after its first half, which is a drone taking off
+;; from a gravel lot. The clips carry no sound; the trailer has its own.
 {:downloads
- [{:id      :sintel
-   :url     "https://download.blender.org/durian/trailer/sintel_trailer-1080p.mp4"
-   :sha256  "34bbd52a4b89fdf63c8ace50b268da26653a59508288100cd3c23de276db7931"
-   :credit  "Sintel, © copyright Blender Foundation | durian.blender.org, CC BY 3.0"}
-  {:id      :bbb
-   :url     "https://download.blender.org/peach/trailer/trailer_1080p.mov"
-   :sha256  "67a3abdfd142e6c32a1994960077a5669b59a5745adceac41de8de540736dc9f"
-   :credit  "Big Buck Bunny, (c) copyright 2008, Blender Foundation | www.bigbuckbunny.org, CC BY 3.0"}]
+ [{:id      :steens
+   :url     "https://upload.wikimedia.org/wikipedia/commons/b/b2/Time_Lapse_Clouds_above_Steens_Mountain_%2836203941112%29.webm"
+   :page    "https://commons.wikimedia.org/wiki/File:Time_Lapse_Clouds_above_Steens_Mountain_(36203941112).webm"
+   :sha256  "9a0979178504e9828109c84b16245cd2bddca4392cece5a2d9a3593bbeae98e4"
+   :credit  "Time Lapse Clouds above Steens Mountain, Bureau of Land Management (BLM Oregon & Washington), public domain"}
+  {:id      :orchard
+   :url     "https://upload.wikimedia.org/wikipedia/commons/2/22/BLM_drone_training_above_Horning_Seed_Orchard_%2835179078385%29.webm"
+   :page    "https://commons.wikimedia.org/wiki/File:BLM_drone_training_above_Horning_Seed_Orchard_(35179078385).webm"
+   :sha256  "a1fedd54bf017ba1bc5772f84daed42707909e491d3b76fa093a922167015504"
+   :credit  "BLM drone training above Horning Seed Orchard, Bureau of Land Management (BLM Oregon & Washington), public domain"}]
 
- ;; each clip: its parts [from to] in seconds, joined; :crop takes away the
- ;; letterbox
+ ;; each clip: its parts [from to] in seconds, joined; :crop, :scale and
+ ;; :fps where a source needs them (these two are 1920x1080 already)
  :clips
- [{:out "sintel_dragon.mp4"         :from :sintel :parts [[23.80 34.80]]                :crop "1920:818:0:130"}
-  {:out "sintel_desert.mp4"         :from :sintel :parts [[4.60 8.70] [35.90 39.40]]   :crop "1920:818:0:130"}
-  {:out "big_buck_bunny_meadow.mp4" :from :bbb    :parts [[9.10 11.15] [13.22 16.55] [18.92 22.88] [24.96 26.64]]}]}
+ [{:out "steens_clouds.mp4"  :from :steens  :parts [[2.0 12.0]]}
+  {:out "orchard_aerial.mp4" :from :orchard :parts [[12.2 22.6]]}]}
