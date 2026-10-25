@@ -1,10 +1,11 @@
 ;; Copyright 2026 EchoJustus. Part of clogem-support.
 ;; SPDX-License-Identifier: MIT
 (ns portal-test
-  "bb portal (scripts/portal.clj): the hub's front page and its 404 page,
-  built from site/site.edn and the apps' folders on gh-pages; and
-  .github/workflows/portal.yml, whose publishing step is run here against a
-  local repository standing in for gh-pages."
+  "bb portal (scripts/portal.clj): the hub's front page in its five
+  languages and its 404 page, built from site/site.edn, site/i18n/ and the
+  apps' folders on gh-pages; and .github/workflows/portal.yml, whose
+  publishing step is run here against a local repository standing in for
+  gh-pages."
   (:require [babashka.fs :as fs]
             [portal]
             [babashka.process :as p]
@@ -33,11 +34,22 @@
     (fs/create-dirs (fs/parent f))
     (spit f (str "<!doctype html>\n<html><head>" head "</head><body><h1>" folder "</h1></body></html>\n"))))
 
+(def ^:private languages (:languages site))
+
+(def ^:private translations
+  (into {} (for [{:keys [id]} (rest languages)]
+             [id (edn/read-string (slurp (str "site/i18n/" id ".edn")))])))
+
 (defn- config!
-  "site.edn with `f` applied, written to a file of its own."
-  [f]
-  (let [file (fs/file (temp-dir) "site.edn")]
+  "site.edn with `f` applied, written to a folder of its own beside the
+  translations, each with `g` applied (they are read from there)."
+  [f & [g]]
+  (let [dir  (temp-dir)
+        file (fs/file dir "site.edn")]
     (spit file (pr-str (f site)))
+    (fs/create-dirs (fs/file dir "i18n"))
+    (doseq [[id tr] translations]
+      (spit (fs/file dir "i18n" (str id ".edn")) (pr-str ((or g identity) tr))))
     (str file)))
 
 (defn- portal!
@@ -48,7 +60,10 @@
                    "bb" "scripts/portal.clj" "--site-dir" (str site-dir) "--out" out args)
         read (fn [n] (let [f (fs/file out n)] (when (fs/exists? f) (slurp f))))]
     {:exit (:exit r) :said (str (:out r) (:err r)) :out out
-     :index (read "index.html") :not-found (read "404.html") :nojekyll (read ".nojekyll")}))
+     :index (read "index.html") :not-found (read "404.html") :nojekyll (read ".nojekyll")
+     ;; each language's front page, by :id
+     :pages (into {} (for [{:keys [id]} languages]
+                       [id (read (if (= id "en") "index.html" (str id "/index.html")))]))}))
 
 (defn- sha256-base64 [^String s]
   (.encodeToString (Base64/getEncoder)
@@ -118,8 +133,8 @@
 (deftest the-pages-run-nothing-and-load-nothing-from-elsewhere
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)
-        {:keys [index not-found]} (portal! pages)]
-    (doseq [[n html] {"index.html" index "404.html" not-found}]
+        {:keys [pages not-found]} (portal! pages)]
+    (doseq [[n html] (assoc pages "404.html" not-found)]
       (testing n
         (is (not (str/includes? (str/lower-case html) "<script")))
         (is (not (re-find #"(?i)\son[a-z]+=" html)) "no event handlers")
@@ -152,11 +167,11 @@
 
 (deftest the-theme-switcher-takes-no-script
   ;; Auto, Light and Dark as radio buttons the stylesheet reads with :has(),
-  ;; on both pages; Auto (the system's setting) is chosen when a page opens
+  ;; on every page; Auto (the system's setting) is chosen when a page opens
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)
-        {:keys [index not-found]} (portal! pages)]
-    (doseq [[n html] {"index.html" index "404.html" not-found}]
+        {:keys [pages not-found]} (portal! pages)]
+    (doseq [[n html] (assoc pages "404.html" not-found)]
       (testing n
         (let [radios (re-seq #"<input [^>]*name=\"theme\"[^>]*>" html)
               style  (second (re-find #"(?s)<style>(.*?)</style>" html))]
@@ -166,7 +181,9 @@
               "Auto when the page opens")
           (doseq [id ["system" "light" "dark"]]
             (is (str/includes? html (str "<label for=\"theme-" id "\""))))
-          (is (re-find #"<fieldset class=\"theme\"><legend>Colour theme</legend>" html) "named for screen readers")
+          (is (re-find #"<fieldset class=\"theme\"><legend>[^<]+</legend>" html) "named for screen readers")
+          (when (#{"en" "404.html"} n)
+            (is (str/includes? html "<legend>Colour theme</legend>")))
           (testing "the stylesheet follows the system unless Light or Dark is chosen"
             (is (str/includes? style "@media (prefers-color-scheme:dark){:root:not(:has(#theme-light:checked)){color-scheme:dark;--bg:#0D1016"))
             (is (str/includes? style ":root:has(#theme-dark:checked){color-scheme:dark;--bg:#0D1016"))
@@ -179,11 +196,178 @@
               "hidden where the browser can't apply it")
           (is (not (str/includes? (str/lower-case html) "<script"))))))))
 
+;; ---------------------------------------------------------------------------
+;; The languages (owner, 2026-10-25)
+
+(defn- esc
+  "Text as hiccup writes it into a page."
+  [s]
+  (-> s (str/replace "&" "&amp;") (str/replace "<" "&lt;") (str/replace ">" "&gt;")
+      (str/replace "\"" "&quot;") (str/replace "'" "&apos;")))
+
+(defn- page-url [id] (str (:url site) (when-not (= id "en") (str id "/"))))
+
+(deftest every-language-has-its-page
+  ;; English at the root, the others in their folders, each telling search
+  ;; engines where the rest are
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [exit said pages]} (portal! pages)]
+    (is (zero? exit) said)
+    (is (= ["en" "zh-hans" "zh-hant" "pt" "es"] (map :id languages)) "the owner's five, English first")
+    (is (= {"en" "en" "zh-hans" "zh-Hans" "zh-hant" "zh-Hant-TW" "pt" "pt-BR" "es" "es-ES"}
+           (into {} (map (juxt :id :lang) languages)))
+        "Simplified Chinese; Traditional in Taiwan's words; Brazil's Portuguese; Spain's Spanish")
+    (doseq [{:keys [id lang]} languages
+            :let [html (pages id)
+                  tr   (if (= id "en") site (translations id))]]
+      (testing id
+        (is (some? html))
+        (is (str/includes? html (str "<html lang=\"" lang "\">")))
+        (is (str/includes? html (str "<link href=\"" (page-url id) "\" rel=\"canonical\">")))
+        (testing "every language's address, and English's for anyone else"
+          (doseq [l languages]
+            (is (str/includes? html (str "<link href=\"" (page-url (:id l)) "\" hreflang=\"" (:hreflang l) "\" rel=\"alternate\">"))))
+          (is (str/includes? html (str "<link href=\"" (:url site) "\" hreflang=\"x-default\" rel=\"alternate\">"))))
+        (testing "in its own words"
+          (is (str/includes? html (str "<title>" (esc (:title tr)) "</title>")))
+          (is (str/includes? html (str "<h1>" (esc (get-in tr [:ui :heading])) "</h1>")))
+          (doseq [path [[:lead] [:open-source :title] [:commercial :note] [:feedback :lead]
+                        [:apps "wmark-pro" :about] [:open-source :projects "clogem-press" :about]
+                        [:feedback :channels "bug-report.yml" :action]]]
+            (is (str/includes? html (esc (get-in (if (= id "en") (portal/words site) tr) path))) (pr-str path))))
+        (testing "the names stay as they are"
+          (doseq [n ["Wmark Pro" "Video Watermarker" "Microsoft Store" "clogem-press" "Clogem"]]
+            (is (str/includes? html n) n)))))))
+
+(deftest the-languages-are-a-dropdown
+  ;; owner, 2026-10-25: five names in a row are too many; a <details> opens
+  ;; without a script
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [pages not-found]} (portal! pages)]
+    (doseq [[id html] (assoc pages "404.html" not-found)
+            :let [current (if (= id "404.html") "en" id)
+                  {:keys [lang name]} (some #(when (= current (:id %)) %) languages)
+                  menu (re-find #"(?s)<details class=\"langs\">.*?</details>" html)
+                  links (re-seq #"<a [^>]*>" (or menu ""))]]
+      (testing id
+        (is (some? menu) "one dropdown")
+        (is (= 1 (count (re-seq #"<details" html))))
+        (is (re-find (re-pattern (str "<summary>.*<span class=\"sr\">[^<]+</span><span lang=\"" lang "\">"
+                                      (java.util.regex.Pattern/quote name) "</span>"))
+                     menu)
+            "it shows the current language, after the word for language")
+        (is (= (map :lang languages) (map #(second (re-find #"\slang=\"([^\"]+)\"" %)) links))
+            "every language, each named in its own")
+        (is (= (map :hreflang languages) (map #(second (re-find #"hreflang=\"([^\"]+)\"" %)) links)))
+        (is (= [lang] (keep #(when (str/includes? % "aria-current=\"page\"") (second (re-find #"\slang=\"([^\"]+)\"" %))) links))
+            "the current one marked")
+        (when (= id "404.html")
+          (is (every? #(re-find #"href=\"https://" %) links) "absolute from the 404 page"))))
+    (testing "the stylesheet: no marker, a panel below the button, hidden in print"
+      (let [style (second (re-find #"(?s)<style>(.*?)</style>" (pages "en")))]
+        (is (str/includes? style ".langs summary::-webkit-details-marker{display:none}"))
+        (is (str/includes? style ".langs .menu{position:absolute;right:0;top:calc(100% + .45rem)"))
+        (is (str/includes? style ".jump,.theme,.langs{display:none}}"))))))
+
+(defn- resolves?
+  "Whether a relative link `href` from the page at `page` (its path in the
+  hub) reaches something: a page we wrote in `out`, or an app's in `pages`."
+  [out pages page href]
+  (let [path (first (str/split href #"#"))
+        dir  (or (fs/parent page) (fs/path ""))
+        target (str (fs/normalize (fs/path dir path)))
+        target (if (or (= "" path) (str/ends-with? path "/")) (str (fs/path target "index.html")) target)]
+    (or (fs/exists? (fs/file out target)) (fs/exists? (fs/file pages target)))))
+
+(deftest every-link-leads-somewhere
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [out]} (portal! pages)]
+    (doseq [{:keys [id]} languages
+            :let [page (if (= id "en") "index.html" (str id "/index.html"))
+                  html (slurp (fs/file out page))
+                  ids  (set (map second (re-seq #"\sid=\"([^\"]+)\"" html)))]
+            href (map second (re-seq #"\shref=\"([^\"]+)\"" html))
+            :when (not (re-find #"^(?:https://|mailto:|data:)" href))]
+      (testing (str page " → " href)
+        (if (str/starts-with? href "#")
+          (is (contains? ids (subs href 1)) "a section of the page")
+          (is (resolves? out pages page href)))))
+    (testing "an app's page is in English: from another language, its links say so"
+      (let [pt (slurp (fs/file out "pt" "index.html"))]
+        (is (str/includes? pt (str "<a class=\"primary\" href=\"../wmark-pro/\" hreflang=\"en\">"
+                                   (esc (get-in translations ["pt" :ui :features])) (esc (get-in translations ["pt" :ui :in-english])) "</a>")))
+        (is (str/includes? (slurp (fs/file out "index.html")) "<a class=\"primary\" href=\"wmark-pro/\">Features &amp; support</a>"))))))
+
+(deftest every-translation-gives-every-word
+  (let [english (portal/words site)]
+    (doseq [[id tr] translations
+            :let [file (str "site/i18n/" id ".edn")]]
+      (testing id
+        (is (= [] (vec (portal/translation-problems english tr file))))
+        (is (str/starts-with? (slurp file) ";; Copyright 2026 EchoJustus. All rights reserved."))
+        (testing "translated: a word may match English only when it is short (Bug, Ideas, Apps)"
+          (doseq [path (let [leaves (fn leaves [p m] (if (map? m) (mapcat (fn [[k v]] (leaves (conj p k) v)) m) [p]))]
+                         (leaves [] english))
+                  :let [e (get-in english path) v (get-in tr path)]
+                  :when (= e v)]
+            (is (< (count e) 10) (str (pr-str path) " is still English: " e))))
+        (testing "the varieties the owner chose"
+          (let [text (pr-str tr)]
+            (case id
+              "zh-hant" (do (is (re-find #"軟體" text)) (is (re-find #"影片" text)) (is (re-find #"浮水印" text))
+                            (is (re-find #"專案" text))
+                            (is (not (re-find #"軟件|視頻|項目|帳戶" text)) "not Hong Kong's or the mainland's words"))
+              "zh-hans" (do (is (re-find #"软件" text)) (is (re-find #"视频" text))
+                            (is (not (re-find #"[軟體視頻專案]" text)) "no Traditional characters"))
+              "pt"      (do (is (re-find #"(?U)\bvocê\b" text)) (is (re-find #"\bcontato\b" text))
+                            (is (not (re-find #"ficheiro|contacto|utilizador|aplicação" text)) "Brazil's Portuguese, not Portugal's"))
+              "es"      (do (is (re-find #"vídeos?" text)) (is (re-find #"\bNecesitas\b" text) "tú, as in Spain's software")
+                            (is (not (re-find #"\bvideos?\b|\bustedes\b|\breportar\b" text)) "Spain's Spanish"))
+              nil))))))
+  (testing "a translation that leaves a word out, adds one, or loses a placeholder stops the build"
+    (let [pages (temp-dir)
+          _     (app-page! pages "wmark-pro" wmark-pro-head)]
+      (doseq [[said g] {"missing [:feedback :note]"             #(update % :feedback dissoc :note)
+                        "not in site.edn [:apps \"other\" :about]" #(assoc-in % [:apps "other"] {:about "x"})
+                        "must keep the placeholders {app} {store}" #(assoc-in % [:ui :get-label] "Get it")
+                        "must be text"                            #(assoc-in % [:commercial :title] " ")}]
+        (let [{:keys [exit] out :said} (portal! pages "--config" (config! identity g))]
+          (is (= 1 exit))
+          (is (str/includes? out said) out))))))
+
+(deftest chinese-is-set-in-chinese-fonts
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [pages]} (portal! pages)
+        style (second (re-find #"(?s)<style>(.*?)</style>" (pages "zh-hant")))]
+    (is (re-find #":lang\(zh-Hans\)\{--cjk:\"Microsoft YaHei UI\"[^}]*\"PingFang SC\"" style))
+    (is (re-find #":lang\(zh-Hant\)\{--cjk:\"Microsoft JhengHei UI\"[^}]*\"PingFang TC\"" style)
+        "Traditional characters in Traditional fonts, never a Japanese or Simplified fallback")
+    (is (str/includes? style "Arial,var(--cjk);") "after the Latin face, so Latin text keeps it")
+    (is (str/includes? style "[lang]:not(html){font-family:") "and a name in another language, in the menu, takes its own")
+    (is (str/includes? style ":lang(zh) :is(h1,h2){letter-spacing:0}"))))
+
+(deftest the-404-page-speaks-every-language
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [not-found]} (portal! pages)]
+    (doseq [{:keys [id lang hreflang]} (rest languages)
+            :let [tr (translations id)]]
+      (is (str/includes? not-found (str "<p lang=\"" lang "\">" (esc (get-in tr [:ui :not-found-text]))))
+          id)
+      (is (str/includes? not-found (str "<a href=\"" (page-url id) "\" hreflang=\"" hreflang "\">" (esc (:title tr)) "</a>"))
+          id))
+    (is (str/includes? not-found "此地址没有页面。<a ") "no space after a Chinese full stop")
+    (is (str/includes? not-found "Não há nenhuma página neste endereço. <a "))))
+
 (deftest an-app-is-listed-once-it-is-published
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)
         later {:folder "next-app" :name "Next App" :subtitle "Coming" :about "Not yet." :accent ["#23A982" "#E5A23A"]}
-        conf  (config! #(update % :apps conj later))]
+        conf  (config! #(update % :apps conj later) #(assoc-in % [:apps "next-app"] {:about "Pas encore."}))]
     (testing "an app in site.edn with no folder on gh-pages yet is left out, with a warning"
       (let [{:keys [exit said index]} (portal! pages "--config" conf)]
         (is (zero? exit) said)
@@ -238,7 +422,11 @@
                          "its :accent must be two"       #(assoc-in % [:apps 0 :accent] ["red" "#EDBE6A"])
                          "it needs :name"                #(assoc-in % [:apps 0 :about] " ")
                          "each have their own :folder"   #(update % :apps (fn [apps] (conj apps (first apps))))
-                         ":apps must list at least one"  #(assoc % :apps [])}]
+                         ":apps must list at least one"  #(assoc % :apps [])
+                         "its :folder is a language's"   #(assoc-in % [:apps 0 :folder] "zh-hans")
+                         ":languages starts with en"     #(update % :languages (comp vec reverse))
+                         "its :lang must be a language"  #(assoc-in % [:languages 1 :lang] "Chinese")
+                         ":ui must give exactly"         #(update % :ui dissoc :browse)}]
       (testing problem
         (let [{:keys [exit said]} (portal! pages "--config" (config! f))]
           (is (= 1 exit))
@@ -354,7 +542,8 @@
     {:remote remote :seed seed :work work}))
 
 (defn- publish! [work]
-  (p/shell {:dir work :out :string :err :string :continue true}
+  (p/shell {:dir work :out :string :err :string :continue true
+            :extra-env {"OWNED" (get-in workflow [:jobs :publish :env :OWNED])}}
            "bash" "-c" (:run (step :publish "publish"))))
 
 (defn- tree [remote] (set (str/split-lines (git! remote "ls-tree" "-r" "--name-only" "gh-pages"))))
@@ -367,7 +556,8 @@
     (testing "the first publication adds the three root files, and nothing else changes"
       (let [r (publish! work)]
         (is (zero? (:exit r)) (str (:out r) (:err r)))
-        (is (= #{"index.html" "404.html" ".nojekyll" "wmark-pro/index.html" "other-app/index.html" "CNAME.txt"}
+        (is (= (into #{"index.html" "404.html" ".nojekyll" "wmark-pro/index.html" "other-app/index.html" "CNAME.txt"}
+                     (for [{:keys [id]} (rest languages)] (str id "/index.html")))
                (tree remote)))
         (is (= page (app)))
         (is (= "not the portal's" (str/trim (git! remote "show" "gh-pages:CNAME.txt"))))
@@ -409,15 +599,23 @@
     (is (= "github.event_name != 'pull_request' && github.ref == 'refs/heads/main'"
            (get-in workflow [:jobs :publish :if])))
     (is (= ["test"] (let [n (get-in workflow [:jobs :publish :needs])] (if (string? n) [n] n)))))
-  (testing "stages the root files alone and never forces"
+  (testing "stages what the front page owns alone, and never forces"
     (let [run (:run (step :publish "publish"))]
-      (is (str/includes? run "git -C pages add -- index.html 404.html .nojekyll"))
+      (is (str/includes? run "git -C pages add -- $OWNED"))
       (is (not (re-find #"add\s+(--all|-A|\.)" run)))
       (is (not (re-find #"--force|\s-f\s|\+HEAD|push[^\n]*\+" run)))
       (is (str/includes? run "for attempt in 1 2 3"))))
   (testing "asks Pages for a build, since its own commits start none"
     (is (str/includes? workflow-text "gh api -X POST \"repos/$GITHUB_REPOSITORY/pages/builds\""))
     (is (str/includes? workflow-text "GH_TOKEN: ${{ github.token }}")))
+  (testing "what it owns is what bb portal writes: the root files and the languages' folders"
+    (let [pages (temp-dir)
+          _     (app-page! pages "wmark-pro" wmark-pro-head)
+          {:keys [out]} (portal! pages)]
+      (is (= (set (map str (fs/list-dir out)))
+             (set (map #(str (fs/path out %)) (str/split (get-in workflow [:jobs :publish :env :OWNED]) #" ")))))
+      (is (= (into ["index.html" "404.html" ".nojekyll"] (map :id (rest languages)))
+             (str/split (get-in workflow [:jobs :publish :env :OWNED]) #" ")))))
   (testing "the address it checks is site.edn's"
     (is (= (:url site) (get-in workflow [:jobs :publish :env :URL]))))
   (testing "every action pinned by commit"

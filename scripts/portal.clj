@@ -13,7 +13,15 @@
   branch of this repository: each app publishes its own folder there (its
   support and privacy page), and this page is the root, with a 404 page for
   any address that isn't there. .github/workflows/portal.yml publishes the
-  root files alone and leaves the apps' folders as they are.
+  root files and the language folders alone and leaves the apps' folders as
+  they are.
+
+  In five languages (owner, 2026-10-25): English at the root, from
+  site.edn, and one folder per other language (zh-hans/, zh-hant/, pt/,
+  es/), from site/i18n/<id>.edn, which must give every word site.edn
+  gives (--i18n DIR reads them elsewhere). Without a script nothing picks
+  the visitor's language: each page links to the others from a dropdown
+  (a <details>), and tells search engines about them (hreflang).
 
   The front page has three parts: the commercial apps (each with where to
   get it, its page and its policy), the open-source projects (each with
@@ -80,7 +88,7 @@
          :when problem]
      (str "project " (pr-str (or id project)) ": " problem))))
 
-(defn- check-apps [commercial apps]
+(defn- check-apps [commercial apps language-ids]
   (concat
    (when-not (every? text? (map commercial [:title :lead :note]))
      [":commercial needs :title, :lead and :note"])
@@ -90,6 +98,8 @@
    (for [{:keys [folder name subtitle about accent store] :as app} apps
          problem [(when-not (and (string? folder) (re-matches one-name folder))
                     "its :folder must be one lowercase folder name")
+                  (when (contains? (set language-ids) folder)
+                    "its :folder is a language's: the front page publishes that one")
                   (when (some #(not (text? %)) [name subtitle about])
                     "it needs :name, :subtitle and :about")
                   (when-not (colours? accent)
@@ -119,9 +129,48 @@
          :when problem]
      (str "feedback channel " (pr-str (or title channel)) ": " problem))))
 
+(def ^:private language-tag #"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*")
+
+(defn- check-languages [languages]
+  (concat
+   (when-not (seq languages) [":languages must list at least one language"])
+   (when (and (seq languages) (not (apply distinct? (map :id languages))))
+     [":languages must each have their own :id"])
+   (when (and (seq languages) (not= "en" (:id (first languages))))
+     [":languages starts with en: the root page, in site.edn's words"])
+   (for [{:keys [id lang hreflang name] :as language} languages
+         problem [(when-not (and (string? id) (re-matches one-name id))
+                    "its :id must be one lowercase name (its folder)")
+                  (when-not (and (string? lang) (re-matches language-tag lang))
+                    "its :lang must be a language tag, like pt-BR")
+                  (when-not (and (string? hreflang) (re-matches language-tag hreflang))
+                    "its :hreflang must be a language tag, like pt")
+                  (when-not (text? name)
+                    "it needs its :name, in its own language")]
+         :when problem]
+     (str "language " (pr-str (or id language)) ": " problem))))
+
+(def ui-keys
+  "The page's own words, besides the sections' (site.edn's :ui). Some are
+  templates: {app}, {store}, {name} and {license} are filled in."
+  [:heading :description-tail :on-this-page :jump-apps :jump-open-source :jump-feedback
+   :language :theme :theme-auto :theme-auto-title :theme-light :theme-light-title
+   :theme-dark :theme-dark-title :later :later-label :open-source-tag :links-label :source
+   :get-label :download-from :features :privacy :feedback :in-english :browse
+   :business-title :business-about :footer-privacy
+   :not-found-title :not-found-text :not-found-where :not-found-description])
+
+(defn- check-ui [ui]
+  (concat
+   (when-not (and (map? ui) (= (set ui-keys) (set (keys ui))))
+     [(str ":ui must give exactly these words: " (str/join " " ui-keys))])
+   ;; :in-english marks a link to a page in English: empty in English itself
+   (for [k ui-keys :when (and (map? ui) (not= k :in-english) (not (text? (get ui k))))]
+     (str ":ui " k " must be text"))))
+
 (defn check-site
   "site.edn's problems, in words."
-  [{:keys [url title lead business open-source commercial apps feedback]}]
+  [{:keys [url title lead business open-source commercial apps feedback languages ui]}]
   (concat
    (for [[k v] {:url url :title title :lead lead :business business}
          :when (not (text? v))]
@@ -130,9 +179,100 @@
      [":url must be https and end with /"])
    (when-not (and (string? business) (re-matches #"[^\s@<>\"]+@[^\s@<>\"]+\.[A-Za-z]{2,}" business))
      [":business must be an email address"])
+   (check-languages languages)
+   (check-ui ui)
    (check-projects open-source)
-   (check-apps commercial apps)
+   (check-apps commercial apps (map :id languages))
    (check-feedback feedback)))
+
+;; ---------------------------------------------------------------------------
+;; The languages
+
+(defn- channel-key
+  "A feedback channel's name in a translation: its category, or its form."
+  [{:keys [discussion issue-form]}]
+  (or discussion issue-form))
+
+(defn words
+  "The words a translation gives, in the shape of site/i18n/<id>.edn: the
+  page's own (:ui) and the sections', each project, app and channel keyed
+  by its :id, :folder or channel-key. Names stay as they are: the apps',
+  the projects', the stores', and an app's subtitle, which is part of its
+  product name (Wmark Pro: Video Watermarker, the same in every Store
+  listing)."
+  [{:keys [title lead ui open-source commercial apps feedback]}]
+  {:title title
+   :lead  lead
+   :ui    ui
+   :open-source {:title    (:title open-source)
+                 :lead     (:lead open-source)
+                 :projects (into {} (for [p (:projects open-source)]
+                                      [(:id p) (select-keys p [:subtitle :about :status])]))}
+   :commercial (select-keys commercial [:title :lead :note])
+   :apps (into {} (for [{:keys [folder about store]} apps]
+                    [folder (cond-> {:about about} store (assoc :store {:note (:note store)}))]))
+   :feedback {:title    (:title feedback)
+              :lead     (:lead feedback)
+              :note     (:note feedback)
+              :channels (into {} (for [c (:channels feedback)]
+                                   [(channel-key c) (select-keys c [:badge :title :about :action])]))}})
+
+(defn- leaves
+  "Every path to a value that isn't a map."
+  ([m] (leaves [] m))
+  ([path m] (if (map? m) (mapcat (fn [[k v]] (leaves (conj path k) v)) m) [path])))
+
+(defn- placeholders [s] (set (re-seq #"\{[a-z]+\}" (str s))))
+
+(defn translation-problems
+  "Why the translation `tr` (read from `file`) can't be used, in words: it
+  must give every word site.edn gives (english, from `words`), nothing
+  else, each as text, with the same placeholders."
+  [english tr file]
+  (if-not (map? tr)
+    [(str file ": must be a map, in site.edn's shape")]
+    (let [want (set (leaves english))
+          have (set (leaves tr))]
+      (concat
+       (for [path (sort-by pr-str (remove have want))] (str file ": missing " (pr-str path)))
+       (for [path (sort-by pr-str (remove want have))] (str file ": not in site.edn " (pr-str path)))
+       (for [path (sort-by pr-str (filter want have))
+             :let [v (get-in tr path) e (get-in english path)]
+             problem [(when-not (text? v) "must be text")
+                      (when (not= (placeholders e) (placeholders v))
+                        (str "must keep the placeholders " (str/join " " (sort (placeholders e)))))]
+             :when problem]
+         (str file ": " (pr-str path) " " problem))))))
+
+(defn localize
+  "`site` in the words of the translation `tr`."
+  [site tr]
+  (-> site
+      (merge (select-keys tr [:title :lead :ui]))
+      (update :open-source merge (select-keys (:open-source tr) [:title :lead]))
+      (update-in [:open-source :projects]
+                 (fn [ps] (mapv #(merge % (get-in tr [:open-source :projects (:id %)])) ps)))
+      (update :commercial merge (:commercial tr))
+      (update :apps (fn [apps]
+                      (mapv (fn [app]
+                              (let [t (get-in tr [:apps (:folder app)])]
+                                (cond-> (merge app (dissoc t :store))
+                                  (:store t) (update :store merge (:store t)))))
+                            apps)))
+      (update :feedback merge (select-keys (:feedback tr) [:title :lead :note]))
+      (update-in [:feedback :channels]
+                 (fn [cs] (mapv #(merge % (get-in tr [:feedback :channels (channel-key %)])) cs)))))
+
+(defn- fill
+  "A :ui template with its {placeholders} filled from `values`."
+  [template values]
+  (str/replace template #"\{([a-z]+)\}" (fn [[_ k]] (str (get values (keyword k))))))
+
+(defn- then
+  "Two sentences in a row: a space between them, but none after a full
+  stop that takes no space (Chinese 。)."
+  [a b]
+  (str a (when-not (re-find #"[。！？：]$" a) " ") b))
 
 (defn channel-url
   "Where a feedback channel opens: a new discussion in its category, or a
@@ -277,17 +417,23 @@
      (str "@media (prefers-color-scheme:dark){:root:not(:has(#theme-light:checked)){color-scheme:dark;" dark "}}")
      (str ":root:has(#theme-dark:checked){color-scheme:dark;" dark "}")
      ":root:has(#theme-light:checked){color-scheme:light}"
+     ;; Chinese in its own fonts, Simplified and Traditional (never the
+     ;; Japanese forms a system might fall back to), after the Latin face
+     ":root{--cjk:sans-serif}"
+     ":lang(zh-Hans){--cjk:\"Microsoft YaHei UI\",\"Microsoft YaHei\",\"PingFang SC\",\"Hiragino Sans GB\",\"Noto Sans CJK SC\",\"Source Han Sans SC\",sans-serif}"
+     ":lang(zh-Hant){--cjk:\"Microsoft JhengHei UI\",\"Microsoft JhengHei\",\"PingFang TC\",\"Noto Sans CJK TC\",\"Source Han Sans TC\",sans-serif}"
      (str "*,*::before{box-sizing:border-box}"
           "html{-webkit-text-size-adjust:100%;text-size-adjust:100%}")
      (str "body{margin:0;min-height:100vh;color:var(--text);background:"
           "radial-gradient(1100px 560px at 8% -12%,var(--glow-1),transparent 62%),"
           "radial-gradient(900px 520px at 100% -4%,var(--glow-2),transparent 58%),var(--bg);"
-          "font:400 1rem/1.65 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,\"Helvetica Neue\",Arial,sans-serif;"
+          "font:400 1rem/1.65 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,\"Helvetica Neue\",Arial,var(--cjk);"
           "-webkit-font-smoothing:antialiased}")
+     "[lang]:not(html){font-family:\"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,\"Helvetica Neue\",Arial,var(--cjk)}"
      ".page{max-width:62rem;margin:0 auto;padding:clamp(2.5rem,7vw,5.5rem) 1.25rem 2.5rem}"
      "a{color:var(--link);text-underline-offset:.18em}"
      "a:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:.45rem}"
-     "h1,h2,h3{font-family:\"Segoe UI Variable Display\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,sans-serif;color:var(--heading)}"
+     "h1,h2,h3{font-family:\"Segoe UI Variable Display\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,var(--cjk);color:var(--heading)}"
      ;; the header
      ".hero{display:grid;gap:1.4rem}"
      ".top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem 1.5rem}"
@@ -303,11 +449,31 @@
      ".theme input:focus-visible+label{outline:3px solid var(--focus);outline-offset:2px}"
      ".theme svg{flex:none;width:1rem;height:1rem}"
      "@supports not selector(:has(*)){.theme{display:none}}"
+     ".controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.6rem;margin-left:auto}"
+     ;; the language menu: a <details>, so it opens without a script
+     ".langs{position:relative}"
+     ".sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}"
+     (str ".langs summary{display:inline-flex;align-items:center;gap:.45rem;padding:.48rem .9rem;border:1px solid var(--border);"
+          "border-radius:999px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;font-weight:650;"
+          "color:var(--text);cursor:pointer;list-style:none;user-select:none}")
+     ".langs summary::-webkit-details-marker{display:none}"
+     ".langs summary:hover{border-color:var(--focus)}"
+     ".langs summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}"
+     ".langs svg{flex:none;width:1rem;height:1rem}"
+     ".langs .chevron{width:.8rem;height:.8rem;transition:transform .2s ease}"
+     ".langs[open] .chevron{transform:rotate(180deg)}"
+     (str ".langs .menu{position:absolute;right:0;top:calc(100% + .45rem);z-index:10;display:grid;gap:2px;min-width:12rem;"
+          "padding:.35rem;background:var(--surface);border:1px solid var(--border);border-radius:1rem;box-shadow:var(--shadow)}")
+     (str ".langs .menu a{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.5rem .8rem;"
+          "border-radius:.7rem;color:var(--text);font-size:.95rem;text-decoration:none}")
+     ".langs .menu a:hover{background:var(--surface-2)}"
+     ".langs .menu a[aria-current]{background:var(--chip);color:var(--chip-ink);font-weight:650}"
      ".brand{display:flex;align-items:center;gap:clamp(.9rem,2.5vw,1.25rem)}"
      ".mark{flex:none;width:clamp(3.25rem,8vw,4.25rem);height:clamp(3.25rem,8vw,4.25rem)}"
      ".mark svg{display:block;width:100%;height:100%}"
      ".eyebrow{margin:0 0 .2rem;font-size:.78rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--chip-ink)}"
      "h1{margin:0;font-size:clamp(2.2rem,5.2vw,3.3rem);line-height:1.05;letter-spacing:-.025em;font-weight:700}"
+     ":lang(zh) :is(h1,h2){letter-spacing:0}"
      (str ".rule{width:min(11rem,40%);height:3px;border-radius:3px;background:linear-gradient(90deg,"
           (str/join "," family) ")}")
      ".lead{margin:0;max-width:40rem;font-size:1.15rem;color:var(--muted)}"
@@ -381,12 +547,14 @@
      ".help-item p+p{margin-top:.45rem}"
      ".help-item .go{font-weight:650;overflow-wrap:anywhere}"
      ".notfound p{margin:.9rem 0 1.4rem;color:var(--muted);font-size:1.1rem}"
+     ".elsewhere{display:grid;gap:.45rem;margin-top:1.9rem}"
+     ".notfound .elsewhere p{margin:0;font-size:1rem}"
      (str "footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.4rem 1.5rem;margin-top:clamp(3.5rem,9vw,5.5rem);"
           "padding-top:1.4rem;border-top:1px solid var(--border);font-size:.88rem;color:var(--muted)}")
      "footer p{margin:0}"
-     "@media (prefers-reduced-motion:reduce){:root,.theme label,.store,.button span{transition:none}.store:hover,.button:hover span{transform:none}}"
+     "@media (prefers-reduced-motion:reduce){:root,.theme label,.store,.button span,.langs .chevron{transition:none}.store:hover,.button:hover span{transform:none}}"
      (str "@media print{:root{--bg:#fff;--surface:#fff;--surface-2:#fff;--text:#000;--muted:#333;--heading:#000;--link:#000;--border:#bbb;--shadow:none}"
-          "body{background:#fff}.app::before,.project::before,.jump,.theme{display:none}}")]
+          "body{background:#fff}.app::before,.project::before,.jump,.theme,.langs{display:none}}")]
     (for [{:keys [folder accent]} apps]
       (format ".app-%s::before{background:linear-gradient(90deg,%s,%s)}" folder (first accent) (second accent)))
     (for [{:keys [id accent]} projects]
@@ -402,8 +570,25 @@
 
 ;; ---------------------------------------------------------------------------
 ;; The pages
+;;
+;; Each page is written for one language of site.edn's :languages, from a
+;; folder: "" for the root (the first language, English), "<id>/" for the
+;; others. `base` is how its links reach the hub's root: "" from the root,
+;; "../" from a language's folder, and the hub's own address from the 404
+;; page, which is served at whatever address was missing.
 
-(defn- head [site style title description]
+(defn- folder
+  "Where a language's page is, from the hub's root: the root for the first
+  language, its own folder for the others."
+  [languages {:keys [id]}]
+  (if (= id (:id (first languages))) "" (str id "/")))
+
+(defn- href
+  "A link from a page whose root is `base` to `path` at the root."
+  [base path]
+  (let [h (str base path)] (if (= "" h) "./" h)))
+
+(defn- head [site style title description languages current]
   [:head
    [:meta {:charset "utf-8"}]
    [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
@@ -414,52 +599,87 @@
    [:meta {:name "theme-color" :media "(prefers-color-scheme: dark)" :content "#0D1016"}]
    [:title title]
    [:meta {:name "description" :content description}]
-   [:link {:rel "canonical" :href (:url site)}]
+   (when current
+     (list
+      [:link {:rel "canonical" :href (str (:url site) (folder languages current))}]
+      ;; the same page in the other languages, for search engines; the
+      ;; root's English for anyone else
+      (for [l languages]
+        [:link {:rel "alternate" :hreflang (:hreflang l) :href (str (:url site) (folder languages l))}])
+      [:link {:rel "alternate" :hreflang "x-default" :href (:url site)}]))
    [:link {:rel "icon" :type "image/svg+xml" :href (data-uri (hub-mark))}]
    [:style (h/raw style)]])
 
-(def ^:private theme-choices
-  "The switcher's choices: id, label, what it does, and its icon (our own
-  drawings, in the text's colour)."
-  [["system" "Auto" "Follow your system's setting"
-    "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 1.75a6.25 6.25 0 0 1 0 12.5Z\" fill=\"currentColor\"/></svg>"]
-   ["light" "Light" "Always light"
-    "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"3\" fill=\"currentColor\"/><path d=\"M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M3.05 12.95l1.13-1.13M11.82 4.18l1.13-1.13\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>"]
-   ["dark" "Dark" "Always dark"
-    "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.5 10.3A6 6 0 0 1 5.7 2.5a6 6 0 1 0 7.8 7.8Z\" fill=\"currentColor\"/></svg>"]])
+(def ^:private theme-icons
+  "The switcher's icons (our own drawings, in the text's colour)."
+  {"system" "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.25\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 1.75a6.25 6.25 0 0 1 0 12.5Z\" fill=\"currentColor\"/></svg>"
+   "light"  "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"3\" fill=\"currentColor\"/><path d=\"M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M3.05 12.95l1.13-1.13M11.82 4.18l1.13-1.13\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>"
+   "dark"   "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.5 10.3A6 6 0 0 1 5.7 2.5a6 6 0 1 0 7.8 7.8Z\" fill=\"currentColor\"/></svg>"})
 
 (defn- theme-switcher
   "Auto, Light or Dark, as radio buttons the stylesheet reads (no script)."
-  []
+  [ui]
   [:fieldset.theme
-   [:legend "Colour theme"]
-   (for [[id label title icon] theme-choices]
+   [:legend (:theme ui)]
+   (for [[id label title] [["system" (:theme-auto ui) (:theme-auto-title ui)]
+                           ["light" (:theme-light ui) (:theme-light-title ui)]
+                           ["dark" (:theme-dark ui) (:theme-dark-title ui)]]]
      (list [:input (cond-> {:type "radio" :name "theme" :id (str "theme-" id) :value id}
                      (= id "system") (assoc :checked true))]
-           [:label {:for (str "theme-" id) :title title} (h/raw icon) label]))])
+           [:label {:for (str "theme-" id) :title title} (h/raw (theme-icons id)) label]))])
 
-(defn- header [site & [jump]]
-  [:header.hero
-   [:div.top
-    [:div.brand
-     [:span.mark {:aria-hidden "true"} (h/raw (hub-mark))]
-     [:div
-      [:p.eyebrow "Clogem"]
-      [:h1 "Support"]]]
-    (theme-switcher)]
-   [:div.rule]
-   [:p.lead (:lead site)]
-   jump])
+(def ^:private globe
+  (str "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\">"
+       "<circle cx=\"8\" cy=\"8\" r=\"6.35\"/><path d=\"M1.9 8h12.2M8 1.65c1.75 1.9 2.6 4 2.6 6.35S9.75 12.45 8 14.35C6.25 12.45 5.4 10.35 5.4 8S6.25 3.55 8 1.65Z\"/>"
+       "</g></svg>"))
 
-(defn- footer [year]
+(def ^:private chevron
+  "<svg class=\"chevron\" viewBox=\"0 0 12 12\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.5 4.5 6 8l3.5-3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>")
+
+(def ^:private check
+  "<svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m3.5 8.5 3 3 6-7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>")
+
+(defn- language-menu
+  "The other languages, from a dropdown (owner, 2026-10-25: a row of five
+  names is too many). A <details>, so it opens without a script; each
+  language is named in its own words, the current one checked."
+  [ui languages current base]
+  [:details.langs
+   ;; read aloud as "Language" and the current one, in no punctuation of
+   ;; ours
+   [:summary (h/raw globe) [:span.sr (:language ui)] [:span {:lang (:lang current)} (:name current)] (h/raw chevron)]
+   [:nav.menu {:aria-label (:language ui)}
+    (for [l languages]
+      [:a (cond-> {:href (href base (folder languages l)) :lang (:lang l) :hreflang (:hreflang l)}
+            (= (:id l) (:id current)) (assoc :aria-current "page"))
+       (:name l)
+       (when (= (:id l) (:id current)) (h/raw check))])]])
+
+(defn- header [site languages current base & [jump]]
+  (let [ui (:ui site)]
+    [:header.hero
+     [:div.top
+      [:div.brand
+       [:span.mark {:aria-hidden "true"} (h/raw (hub-mark))]
+       [:div
+        [:p.eyebrow "Clogem"]
+        [:h1 (:heading ui)]]]
+      [:div.controls
+       (theme-switcher ui)
+       (language-menu ui languages current base)]]
+     [:div.rule]
+     [:p.lead (:lead site)]
+     jump]))
+
+(defn- footer [ui year]
   [:footer
    [:p (str "© " year " EchoJustus.")]
-   [:p "This page sets no cookies and loads nothing from other sites."]])
+   [:p (:footer-privacy ui)]])
 
 (defn- mailto [email subject]
   (str "mailto:" email "?subject=" (str/replace (URLEncoder/encode ^String subject "UTF-8") "+" "%20")))
 
-(defn- project-card [{:keys [id name subtitle about icon-uri repo license status]}]
+(defn- project-card [ui {:keys [id name subtitle about icon-uri repo license status]}]
   [:article {:class (str "project project-" id)}
    [:img.app-icon {:src icon-uri :alt "" :width "56" :height "56"}]
    [:h3 name]
@@ -467,60 +687,72 @@
    [:p.about about]
    (if repo
      (list
-      [:span.tag (str "Open source · " license)]
-      [:nav.links {:aria-label (str name " links")}
-       [:a.primary {:href repo} "Source on GitHub"]])
+      [:span.tag (fill (:open-source-tag ui) {:license license})]
+      [:nav.links {:aria-label (fill (:links-label ui) {:name name})}
+       [:a.primary {:href repo} (:source ui)]])
      [:p.status status])])
 
-(defn- app-card [{:keys [folder name subtitle about icon store]}]
-  [:article {:class (str "app app-" folder)}
-   (if icon
-     [:img.app-icon {:src icon :alt "" :width "64" :height "64"}]
-     [:span.app-icon.plain {:aria-hidden "true"}])
-   [:h3 name]
-   [:p.sub subtitle]
-   [:p.about about]
-   (when store
-     [:div.get
-      [:a.store {:href (:url store) :aria-label (str "Get " name " from the " (:name store))}
-       (h/raw bag)
-       [:span [:small "Download from the"] [:strong (:name store)]]]
-      [:span.store-note (:note store)]])
-   [:nav.links {:aria-label (str name " links")}
-    [:a.primary {:href (str folder "/")} "Features & support"]
-    [:a {:href (str folder "/#privacy")} "Privacy policy"]
-    [:a {:href "#feedback"} "Feedback"]]])
+(defn- app-card
+  "An app's card. Its page is in English: from a page in another language,
+  its links say so (:in-english) and carry hreflang."
+  [ui base english? {:keys [folder name subtitle about icon store]}]
+  (let [to-english (fn [attrs] (cond-> attrs (not english?) (assoc :hreflang "en")))]
+    [:article {:class (str "app app-" folder)}
+     (if icon
+       [:img.app-icon {:src icon :alt "" :width "64" :height "64"}]
+       [:span.app-icon.plain {:aria-hidden "true"}])
+     [:h3 name]
+     [:p.sub subtitle]
+     [:p.about about]
+     (when store
+       [:div.get
+        [:a.store {:href (:url store) :aria-label (fill (:get-label ui) {:app name :store (:name store)})}
+         (h/raw bag)
+         [:span [:small (:download-from ui)] [:strong (:name store)]]]
+        [:span.store-note (:note store)]])
+     [:nav.links {:aria-label (fill (:links-label ui) {:name name})}
+      [:a.primary (to-english {:href (href base (str folder "/"))}) (str (:features ui) (:in-english ui))]
+      [:a (to-english {:href (href base (str folder "/#privacy"))}) (str (:privacy ui) (:in-english ui))]
+      [:a {:href "#feedback"} (:feedback ui)]]]))
 
 (defn index-page
-  "The front page: the commercial apps, the open-source projects, then
-  feedback and support. `projects` carry their icons (project-icons)."
-  [site projects apps year]
-  (let [style (css apps projects)
+  "The front page in the language `current`, from `site` in its words (see
+  localize): the commercial apps, the open-source projects, then feedback
+  and support. Its projects carry their icons (project-icons), its apps
+  theirs (published-apps)."
+  [site year languages current]
+  (let [projects (get-in site [:open-source :projects])
+        apps     (:apps site)
+        style    (css apps projects)
+        ui       (:ui site)
+        english? (= (:id current) (:id (first languages)))
+        base     (if english? "" "../")
         {os :open-source com :commercial fb :feedback} site]
     (str
      "<!doctype html>\n"
      (h/html
       {:mode :html}
-      [:html {:lang "en"}
-       (head site style (:title site) (str (:lead site) " Each app's support page has its contacts and its privacy policy."))
+      [:html {:lang (:lang current)}
+       (head site style (:title site) (then (:lead site) (:description-tail ui)) languages current)
        [:body
         [:div.page
-         (header site [:nav.jump {:aria-label "On this page"}
-                       [:a {:href "#apps"} "Apps"]
-                       [:a {:href "#open-source"} "Open source"]
-                       [:a {:href "#feedback"} "Feedback & support"]])
+         (header site languages current base
+                 [:nav.jump {:aria-label (:on-this-page ui)}
+                  [:a {:href "#apps"} (:jump-apps ui)]
+                  [:a {:href "#open-source"} (:jump-open-source ui)]
+                  [:a {:href "#feedback"} (:jump-feedback ui)]])
          [:main
           [:section#apps {:aria-labelledby "apps-title"}
            [:h2#apps-title (:title com)]
            [:p.section-lead (:lead com)]
-           [:div.apps (map app-card apps)]
-           [:aside.next {:aria-label "Coming later"}
-            [:span.chip "Later"]
+           [:div.apps (map (partial app-card ui base english?) apps)]
+           [:aside.next {:aria-label (:later-label ui)}
+            [:span.chip (:later ui)]
             [:p (:note com)]]]
           [:section#open-source {:aria-labelledby "open-source-title"}
            [:h2#open-source-title (:title os)]
            [:p.section-lead (:lead os)]
-           [:div.projects (map project-card projects)]]
+           [:div.projects (map (partial project-card ui) projects)]]
           [:section#feedback {:aria-labelledby "feedback-title"}
            [:h2#feedback-title (:title fb)]
            [:p.section-lead (:lead fb)]
@@ -531,60 +763,95 @@
                [:h3 title]
                [:p about]
                [:a.button {:href (channel-url (:repo fb) ch)} action [:span {:aria-hidden "true"} "→"]]])]
-           [:p.fine (:note fb) " " [:a {:href (str (:repo fb) "/discussions")} "Browse the discussions"] "."]
+           [:p.fine (then (:note fb) "") [:a {:href (str (:repo fb) "/discussions")} (:browse ui)]]
            [:div.help
             [:div.help-item
-             [:h3 "Business, privacy and legal"]
-             [:p "Partnerships, licensing, questions about a privacy policy or your data, and legal notices: write to us privately."]
+             [:h3 (:business-title ui)]
+             [:p (:business-about ui)]
              [:p [:a.go {:href (mailto (:business site) "Clogem")} (:business site)]]]]]]
-         (footer year)]]]))))
+         (footer ui year)]]]))))
 
 (defn not-found-page
   "The 404 page GitHub Pages shows for any address in the hub that isn't
-  there. Its links are absolute: it is served at the missing address."
-  [site apps year]
-  (let [style (css apps [])]
+  there, in English, with a line in each other language. Its links are
+  absolute: it is served at the missing address. `sites` are site.edn in
+  each language's words, by :id."
+  [sites year languages]
+  (let [english (first languages)
+        site    (sites (:id english))
+        ui      (:ui site)
+        style   (css (:apps site) [])
+        base    (:url site)]
     (str
      "<!doctype html>\n"
      (h/html
       {:mode :html}
-      [:html {:lang "en"}
-       (head site style (str "Page not found: " (:title site)) "This page isn't part of Clogem Support.")
+      [:html {:lang (:lang english)}
+       (head site style (str (:not-found-title ui) ": " (:title site)) (:not-found-description ui) languages nil)
        [:body
         [:div.page
-         (header site)
+         (header site languages english base)
          [:main
           [:section.notfound {:aria-labelledby "nf-title"}
-           [:h2#nf-title "Page not found"]
-           [:p "There's no page at this address."]
-           [:nav.links {:aria-label "Where to go"}
-            [:a.primary {:href (:url site)} "Clogem Support"]
-            (for [{:keys [folder name]} apps]
-              [:a {:href (str (:url site) folder "/")} name])]]]
-         (footer year)]]]))))
+           [:h2#nf-title (:not-found-title ui)]
+           [:p (:not-found-text ui)]
+           [:nav.links {:aria-label (:not-found-where ui)}
+            [:a.primary {:href base} (:title site)]
+            (for [{:keys [folder name]} (:apps site)]
+              [:a {:href (str base folder "/")} name])]
+           [:div.elsewhere
+            (for [l (rest languages)
+                  :let [s (sites (:id l))]]
+              [:p {:lang (:lang l)}
+               (then (get-in s [:ui :not-found-text]) "")
+               [:a {:href (str base (folder languages l)) :hreflang (:hreflang l)} (:title s)]])]]]
+         (footer ui year)]]]))))
+
+(defn- read-translations
+  "Each language's translation but the first's, from `dir`: [id map]."
+  [languages dir]
+  (vec (for [{:keys [id]} (rest languages)
+             :let [f (fs/file dir (str id ".edn"))]]
+         (if (fs/exists? f)
+           [id (edn/read-string (slurp f))]
+           (fail! (str "The " id " translation isn't there: " f))))))
 
 (defn -main [& args]
-  (let [valued #{"--out" "--site-dir" "--config" "--root"}
+  (let [valued #{"--out" "--site-dir" "--config" "--root" "--i18n"}
         opts   (loop [[a & more :as as] args, out {}]
                  (cond (empty? as) out
                        (valued a)  (if (seq more) (recur (rest more) (assoc out a (first more)))
                                        (fail! a "needs a value"))
-                       :else       (fail! "bb portal [--site-dir DIR] [--out DIR], not" a)))
-        site   (edn/read-string (slurp (get opts "--config" "site/site.edn")))
+                       :else       (fail! "bb portal [--site-dir DIR] [--out DIR] [--i18n DIR], not" a)))
+        config (get opts "--config" "site/site.edn")
+        site   (edn/read-string (slurp config))
         _      (when-let [problems (seq (check-site site))]
                  (fail! (str "site/site.edn isn't right:\n  " (str/join "\n  " problems))))
+        languages (:languages site)
+        i18n   (get opts "--i18n" (str (fs/path (or (fs/parent config) ".") "i18n")))
+        translations (read-translations languages i18n)
+        _      (when-let [problems (seq (mapcat (fn [[id tr]] (translation-problems (words site) tr (str (fs/file i18n (str id ".edn")))))
+                                                translations))]
+                 (fail! (str "A translation isn't right:\n  " (str/join "\n  " problems))))
         dir    (get opts "--site-dir")
         _      (when (and dir (not (fs/directory? dir))) (fail! dir "isn't a folder"))
         projects (project-icons (get-in site [:open-source :projects]) (get opts "--root" "."))
         apps   (vec (published-apps (:apps site) dir))
         _      (when (empty? apps) (fail! "No app is published yet: nothing to list."))
+        listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects))
+        sites  (into {(:id (first languages)) listed}
+                     (for [[id tr] translations] [id (localize listed tr)]))
         out    (get opts "--out" "_site")
         year   (str (java.time.Year/now))]
     (fs/create-dirs out)
-    (spit (fs/file out "index.html") (index-page site projects apps year))
-    (spit (fs/file out "404.html") (not-found-page site apps year))
+    (doseq [l languages
+            :let [page (fs/file out (folder languages l) "index.html")]]
+      (fs/create-dirs (fs/parent page))
+      (spit page (index-page (sites (:id l)) year languages l)))
+    (spit (fs/file out "404.html") (not-found-page sites year languages))
     (spit (fs/file out ".nojekyll") "")
-    (println (str "Wrote " out "/index.html, 404.html and .nojekyll, listing "
+    (println (str "Wrote " out "/: index.html, " (str/join ", " (for [l (rest languages)] (str (:id l) "/index.html")))
+                  ", 404.html and .nojekyll, listing "
                   (str/join ", " (concat (map :name projects) (map :name apps))) ", for " (:url site)))))
 
 (when (= *file* (System/getProperty "babashka.file"))

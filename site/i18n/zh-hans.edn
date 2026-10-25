@@ -1,0 +1,77 @@
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
+;;
+;; The front page in Simplified Chinese, for any reader of it (zh-Hans,
+;; written for the mainland's usage: 软件, 视频, 项目, 账号). Every word
+;; site.edn gives, in its shape, and nothing else (bb test checks it); the
+;; names of the apps, projects and stores stay as they are.
+{:title "Clogem 支持中心"
+ :lead  "Clogem 应用的帮助、联系方式和隐私政策，以及这些应用所基于的开源项目。"
+
+ :ui
+ {:heading               "支持中心"
+  :description-tail      "每个应用的支持页面都列有联系方式和隐私政策。"
+  :on-this-page          "本页内容"
+  :jump-apps             "应用"
+  :jump-open-source      "开源"
+  :jump-feedback         "反馈与支持"
+  :language              "语言"
+  :theme                 "颜色主题"
+  :theme-auto            "自动"
+  :theme-auto-title      "跟随系统设置"
+  :theme-light           "浅色"
+  :theme-light-title     "始终使用浅色"
+  :theme-dark            "深色"
+  :theme-dark-title      "始终使用深色"
+  :later                 "即将推出"
+  :later-label           "即将推出"
+  :open-source-tag       "开源 · {license}"
+  :links-label           "{name} 的链接"
+  :source                "GitHub 上的源代码"
+  :get-label             "从 {store} 获取 {app}"
+  :download-from         "下载自"
+  :features              "功能与支持"
+  :privacy               "隐私政策"
+  :feedback              "反馈"
+  :in-english            "（英文）"
+  :browse                "浏览讨论。"
+  :business-title        "商务、隐私与法律事务"
+  :business-about        "合作、授权许可、关于隐私政策或您的数据的问题，以及法律通知：请发送电子邮件与我们私下联系。"
+  :footer-privacy        "本页面不设置 Cookie，也不从其他网站加载任何内容。"
+  :not-found-title       "找不到页面"
+  :not-found-text        "此地址没有页面。"
+  :not-found-where       "前往"
+  :not-found-description "此页面不属于 Clogem 支持中心。"}
+
+ :open-source
+ {:title "开源核心软件"
+  :lead  "我们以开源方式构建的工具和库。欢迎阅读和使用代码，并向各个项目提交 Issue 和 Pull Request。"
+  :projects
+  {"clogem-hstry" {:subtitle "聊天记录"
+                   :about    "一款本地优先的工具，用于保存、搜索和分析聊天记录。"
+                   :status   "处于早期开发阶段，源代码尚未公开。"}
+   "clogem-press" {:subtitle "知识库、博客和文档"
+                   :about    "一款网站生成器，用于构建知识库、博客和文档，内容最多支持五种语言。它在 Babashka 上运行，没有其他依赖。"}
+   "clogem-wmark" {:subtitle "视频水印，开源核心"
+                   :about    "批量为视频添加水印，提高用 AI 去除水印的成本：会 3D 翻转的标志，以及按密钥安排时间的警示文字。Wmark Pro 所基于的引擎、命令行和网页界面。"}}}
+
+ :commercial
+ {:title "商业软件"
+  :lead  "基于开源核心构建的应用，界面专为创作者设计。每个应用都有自己的支持页面和隐私政策。"
+  :note  "随着 clogem-press 等工具日趋成熟，它们也将推出 Pro 版：界面友好、便于管理内容的应用。"}
+
+ :apps
+ {"wmark-pro" {:about "批量为视频添加水印，让 AI 更难去除水印。适用于 Windows。"
+               :store {:note "Windows 10 和 11 · x64 和 Arm64"}}}
+
+ :feedback
+ {:title "反馈与支持"
+  :lead  "在 GitHub 上公开提问、提出建议和报告问题。我们会在那里回复，每个解答也能帮助后来的人。"
+  :note  "您需要一个免费的 GitHub 账号。那里的所有内容都是公开的：请勿填写个人信息、许可证密钥和视频。我们回复时，GitHub 会通知您。表单为英文。"
+  :channels
+  {"ideas"          {:badge "建议" :title "分享反馈或想法"
+                     :about "哪些好用，哪些不好用，以及您接下来希望有什么。" :action "发起讨论"}
+   "q-a"            {:badge "问答" :title "提出问题"
+                     :about "如何完成某项操作，或者某个应用为什么会那样运行。" :action "提出问题"}
+   "bug-report.yml" {:badge "错误" :title "报告错误"
+                     :about "出了故障或显示不对：请告诉我们是哪个应用、它的版本和操作步骤。" :action "报告错误"}}}}

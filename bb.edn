@@ -2,7 +2,7 @@
 ;; SPDX-License-Identifier: MIT
 {:paths ["scripts" "test"]
  :tasks
- {portal {:doc  "The hub's front page: index.html, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn)"
+ {portal {:doc  "The hub's front page in five languages: index.html, zh-hans/, zh-hant/, pt/, es/, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn, site/i18n/)"
           :task (apply shell "bb" "scripts/portal.clj" *command-line-args*)}
   trailer {:doc      "A Store trailer: bb trailer --sources DIR [--trailer trailers/wmark-pro] [--quality repo|store] (scripts/trailer/main.clj; trailers/wmark-pro/README.md)"
            :requires ([trailer.main])

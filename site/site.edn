@@ -9,6 +9,58 @@
  :title "Clogem Support"
  :lead  "Help, contact and privacy policies for Clogem apps, and the open-source projects they are built on."
 
+ ;; The languages, in the order the language menu lists them (owner,
+ ;; 2026-10-25). The first is the root page, in this file's words; each
+ ;; other one is the folder of its :id on gh-pages, in the words of
+ ;; site/i18n/<id>.edn. :lang is the page's own language tag, with its
+ ;; variety: Traditional Chinese in Taiwan's words, Brazil's Portuguese,
+ ;; Spain's Spanish. :hreflang is who the page is for (anyone reading that
+ ;; language), and :name the language in its own words.
+ :languages
+ [{:id "en"      :lang "en"         :hreflang "en"      :name "English"}
+  {:id "zh-hans" :lang "zh-Hans"    :hreflang "zh-Hans" :name "简体中文"}
+  {:id "zh-hant" :lang "zh-Hant-TW" :hreflang "zh-Hant" :name "繁體中文"}
+  {:id "pt"      :lang "pt-BR"      :hreflang "pt"      :name "Português"}
+  {:id "es"      :lang "es-ES"      :hreflang "es"      :name "Español"}]
+
+ ;; The page's own words, besides the sections'. In {braces}: what is
+ ;; filled in. :in-english follows a link to a page that is in English (an
+ ;; app's page), so here it is empty.
+ :ui
+ {:heading               "Support"
+  :description-tail      "Each app's support page has its contacts and its privacy policy."
+  :on-this-page          "On this page"
+  :jump-apps             "Apps"
+  :jump-open-source      "Open source"
+  :jump-feedback         "Feedback & support"
+  :language              "Language"
+  :theme                 "Colour theme"
+  :theme-auto            "Auto"
+  :theme-auto-title      "Follow your system's setting"
+  :theme-light           "Light"
+  :theme-light-title     "Always light"
+  :theme-dark            "Dark"
+  :theme-dark-title      "Always dark"
+  :later                 "Later"
+  :later-label           "Coming later"
+  :open-source-tag       "Open source · {license}"
+  :links-label           "{name} links"
+  :source                "Source on GitHub"
+  :get-label             "Get {app} from the {store}"
+  :download-from         "Download from the"
+  :features              "Features & support"
+  :privacy               "Privacy policy"
+  :feedback              "Feedback"
+  :in-english            ""
+  :browse                "Browse the discussions."
+  :business-title        "Business, privacy and legal"
+  :business-about        "Partnerships, licensing, questions about a privacy policy or your data, and legal notices: write to us privately."
+  :footer-privacy        "This page sets no cookies and loads nothing from other sites."
+  :not-found-title       "Page not found"
+  :not-found-text        "There's no page at this address."
+  :not-found-where       "Where to go"
+  :not-found-description "This page isn't part of Clogem Support."}
+
  ;; The projects built in the open, in the order shown (the owner's,
  ;; 2026-10-02). Each icon is a file in icons/, an SVG or a PNG of at least
  ;; 112 pixels (its README says where it comes from); :accent is two

@@ -1,0 +1,78 @@
+;; Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support.
+;; Not covered by the MIT license: see the README, "License".
+;;
+;; The front page in Portuguese, written for Brazil (pt-BR: você, app,
+;; contato, gerenciar, baixar), for any reader of Portuguese: the README,
+;; "Languages", says why one Portuguese page serves Portugal too. Every
+;; word site.edn gives, in its shape, and nothing else (bb test checks
+;; it); the names of the apps, projects and stores stay as they are.
+{:title "Suporte Clogem"
+ :lead  "Ajuda, contato e políticas de privacidade dos apps Clogem, e os projetos de código aberto em que eles se baseiam."
+
+ :ui
+ {:heading               "Suporte"
+  :description-tail      "A página de suporte de cada app traz os contatos e a política de privacidade dele."
+  :on-this-page          "Nesta página"
+  :jump-apps             "Apps"
+  :jump-open-source      "Código aberto"
+  :jump-feedback         "Feedback e suporte"
+  :language              "Idioma"
+  :theme                 "Tema de cores"
+  :theme-auto            "Automático"
+  :theme-auto-title      "Seguir a configuração do sistema"
+  :theme-light           "Claro"
+  :theme-light-title     "Sempre claro"
+  :theme-dark            "Escuro"
+  :theme-dark-title      "Sempre escuro"
+  :later                 "Em breve"
+  :later-label           "Em breve"
+  :open-source-tag       "Código aberto · {license}"
+  :links-label           "Links de {name}"
+  :source                "Código-fonte no GitHub"
+  :get-label             "Obtenha o {app} na {store}"
+  :download-from         "Baixe na"
+  :features              "Recursos e suporte"
+  :privacy               "Política de privacidade"
+  :feedback              "Feedback"
+  :in-english            " (em inglês)"
+  :browse                "Veja as discussões."
+  :business-title        "Negócios, privacidade e questões jurídicas"
+  :business-about        "Parcerias, licenciamento, dúvidas sobre uma política de privacidade ou sobre seus dados, e notificações legais: escreva para nós em particular."
+  :footer-privacy        "Esta página não usa cookies e não carrega nada de outros sites."
+  :not-found-title       "Página não encontrada"
+  :not-found-text        "Não há nenhuma página neste endereço."
+  :not-found-where       "Para onde ir"
+  :not-found-description "Esta página não faz parte do Suporte Clogem."}
+
+ :open-source
+ {:title "Software central de código aberto"
+  :lead  "As ferramentas e bibliotecas que desenvolvemos abertamente. Leia o código, use-o e envie issues e pull requests para cada projeto."
+  :projects
+  {"clogem-hstry" {:subtitle "Histórico de conversas"
+                   :about    "Uma ferramenta local-first para capturar, pesquisar e analisar históricos de conversas."
+                   :status   "Em fase inicial de desenvolvimento. O código-fonte ainda não é público."}
+   "clogem-press" {:subtitle "Bases de conhecimento, blogs e documentação"
+                   :about    "Um gerador de sites para bases de conhecimento, blogs e documentação, com conteúdo em até cinco idiomas. Roda no Babashka, sem nenhuma outra dependência."}
+   "clogem-wmark" {:subtitle "Marca d'água em vídeos, o núcleo aberto"
+                   :about    "Marca d'água em lote para vídeos, que aumenta o custo de removê-la com IA: um logotipo que gira em 3D e textos de aviso em momentos definidos por uma chave. O mecanismo, a linha de comando e a interface web em que o Wmark Pro se baseia."}}}
+
+ :commercial
+ {:title "Software comercial"
+  :lead  "Apps construídos sobre o núcleo aberto, com uma interface feita para criadores. Cada um tem a própria página de suporte e política de privacidade."
+  :note  "À medida que ferramentas como o clogem-press amadurecerem, elas também ganharão edições Pro: apps com uma interface amigável para gerenciar o seu conteúdo."}
+
+ :apps
+ {"wmark-pro" {:about "Aplica marcas d'água em lotes inteiros de vídeos de um jeito que dificulta a remoção por IA. Para Windows."
+               :store {:note "Windows 10 e 11 · x64 e Arm64"}}}
+
+ :feedback
+ {:title "Feedback e suporte"
+  :lead  "Pergunte, sugira e relate problemas no GitHub, abertamente. Respondemos por lá, e cada resposta também ajuda a próxima pessoa."
+  :note  "Você precisa de uma conta gratuita no GitHub. Tudo o que fica lá é público: não inclua dados pessoais, chaves de licença nem vídeos. O GitHub avisa você quando respondermos. Os formulários estão em inglês."
+  :channels
+  {"ideas"          {:badge "Ideias" :title "Envie um feedback ou uma ideia"
+                     :about "O que funciona para você, o que não funciona e o que você gostaria de ver a seguir." :action "Iniciar uma discussão"}
+   "q-a"            {:badge "Perguntas" :title "Faça uma pergunta"
+                     :about "Como fazer algo, ou por que um app fez o que fez." :action "Fazer uma pergunta"}
+   "bug-report.yml" {:badge "Bug" :title "Relate um bug"
+                     :about "Algo quebrou ou parece errado: diga qual app, a versão dele e os passos." :action "Relatar um bug"}}}}
