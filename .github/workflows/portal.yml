@@ -6,10 +6,12 @@
 # The hub is this repository's gh-pages branch. Each app publishes its own
 # folder there from its own repository (its support and privacy page). This
 # workflow owns the root alone: `bb portal` (scripts/portal.clj, from
-# site/site.edn) builds index.html, 404.html and .nojekyll, listing the apps
-# whose folders are on the branch, and it commits those three files and
-# nothing else. It never force-pushes, and if an app publishes at the same
-# moment, it starts again from the branch as it now is.
+# site/site.edn and site/i18n/) builds index.html, 404.html and .nojekyll,
+# and a folder for each language but English (zh-hans/, zh-hant/, pt/,
+# es/), listing the apps whose folders are on the branch; it commits those
+# ($OWNED below) and nothing else. It never force-pushes, and if an app
+# publishes at the same moment, it starts again from the branch as it now
+# is.
 #
 # It runs when the page's sources change on main, by hand, and after every
 # Pages build (page_build): an app's first publication then gets its card,
@@ -66,6 +68,9 @@ jobs:
       cancel-in-progress: false
     env:
       URL: https://echojustus.github.io/clogem-support/
+      # what the front page owns on gh-pages: the root files and the
+      # languages' folders (bb test checks it against what bb portal writes)
+      OWNED: index.html 404.html .nojekyll zh-hans zh-hant pt es
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: DeLaGuardo/setup-clojure@6d46099eae24853c33c0482f2bb54edf4f1a4c74 # 13.7.0
@@ -75,14 +80,14 @@ jobs:
           ref: gh-pages
           path: pages
 
-      - name: Publish the root files (index.html, 404.html, .nojekyll) to gh-pages
+      - name: Publish the front page (the root files and the languages' folders) to gh-pages
         id: publish
         run: |
           set -euo pipefail
           git -C pages config user.name "github-actions[bot]"
           git -C pages config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # One attempt: the branch as it is now, the root files built from
+          # One attempt: the branch as it is now, the front page built from
           # it, the apps' folders as they were. 0 = published or unchanged,
           # 1 = refused.
           publish() {
@@ -90,8 +95,11 @@ jobs:
             git -C pages reset --quiet --hard origin/gh-pages || return 1
             rm -rf _site
             bb scripts/portal.clj --site-dir pages --out _site || exit 1
-            cp _site/index.html _site/404.html _site/.nojekyll pages/ || exit 1
-            git -C pages add -- index.html 404.html .nojekyll || return 1
+            for path in $OWNED; do
+              rm -rf "pages/$path"
+              cp -R "_site/$path" "pages/$path" || exit 1
+            done
+            git -C pages add -- $OWNED || return 1
             if git -C pages diff --cached --quiet; then
               echo "::notice::The front page is unchanged: nothing to publish."; return 0
             fi

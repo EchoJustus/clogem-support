@@ -1,7 +1,11 @@
 # clogem-support
 
 Help, contact and privacy policies for Clogem apps, and the open-source
-projects they are built on: **https://echojustus.github.io/clogem-support/**
+projects they are built on: **https://echojustus.github.io/clogem-support/**,
+also in [简体中文](https://echojustus.github.io/clogem-support/zh-hans/),
+[繁體中文](https://echojustus.github.io/clogem-support/zh-hant/),
+[Português](https://echojustus.github.io/clogem-support/pt/) and
+[Español](https://echojustus.github.io/clogem-support/es/).
 
 - **Ask a question:** [Discussions, Q&A](https://github.com/EchoJustus/clogem-support/discussions/new?category=q-a).
 - **Share feedback or an idea:** [Discussions, Ideas](https://github.com/EchoJustus/clogem-support/discussions/new?category=ideas).
@@ -26,7 +30,8 @@ The site is this repository's `gh-pages` branch, served by GitHub Pages
 
 | On gh-pages | What it is | Who writes it |
 |---|---|---|
-| `index.html`, `404.html`, `.nojekyll` | the front page, the page for missing addresses, and "serve the files as they are" | `portal.yml` here, from `site/site.edn` |
+| `index.html`, `404.html`, `.nojekyll` | the front page in English, the page for missing addresses, and "serve the files as they are" | `portal.yml` here, from `site/site.edn` |
+| `zh-hans/`, `zh-hant/`, `pt/`, `es/` | the front page in its other languages (below, "Languages") | `portal.yml` here, from `site/i18n/` |
 | `<app>/` (`wmark-pro/`, ...) | each app's page: what it is and does, its support and its privacy policy | that app's own repository, through its publishing workflow |
 
 `main` holds only the sources: GitHub counts languages on the default
@@ -34,7 +39,7 @@ branch, so built HTML never shows up there.
 
 Every writer keeps to its own files:
 - it stages only what it owns (an app its folder; the front page its three
-  files);
+  root files and the languages' folders, `OWNED` in `portal.yml`);
 - it never force-pushes;
 - if someone else published at the same moment, it starts again from the
   branch as it now is.
@@ -61,8 +66,9 @@ Three parts, in this order (owner, 2026-10-02; the apps first since
 Each section opens with its heading alone, with no overline repeating it
 (owner, 2026-10-02).
 
-- `site/site.edn`: its words, the projects and apps it lists, in order,
-  the store links and the feedback channels.
+- `site/site.edn`: its words in English, the projects and apps it lists,
+  in order, the store links, the feedback channels and the languages.
+- `site/i18n/<language>.edn`: the same words in each other language.
 - `icons/`: the open-source projects' icons, copied from the clogem icon
   set (`icons/README.md` says from where, and under which licence).
 - `scripts/portal.clj`: the generator, Babashka with the hiccup that ships
@@ -82,7 +88,8 @@ Each section opens with its heading alone, with no overline repeating it
     the header's switcher (Auto, Light, Dark). The switcher is three radio
     buttons the stylesheet reads with `:has()`, so it needs no script; with
     no script and no cookie the choice isn't remembered, and each page
-    opens on Auto.
+    opens on Auto;
+  - beside it, the language menu (below, "Languages").
 
 ```
 bb portal --site-dir pages   # _site/ from a checkout of gh-pages in pages/
@@ -103,6 +110,67 @@ Open `_site/index.html` in a browser to look at it.
   GitHub Docs). So whenever the live front page isn't the one just built,
   the workflow asks Pages for a build (the Pages permission), waits until
   the page is live, and fails if it isn't after ten minutes.
+
+### Languages
+
+The front page is in five languages (owner, 2026-10-25), English by
+default:
+
+| Language | Address | Written for | `lang` |
+|---|---|---|---|
+| English | `/clogem-support/` | everyone else too | `en` |
+| Simplified Chinese | `/clogem-support/zh-hans/` | any reader of it, in the mainland's usage (软件, 视频, 账号) | `zh-Hans` |
+| Traditional Chinese | `/clogem-support/zh-hant/` | any reader of it, in Taiwan's words (軟體, 影片, 浮水印, 專案, 帳號), not Hong Kong's | `zh-Hant-TW` |
+| Portuguese | `/clogem-support/pt/` | Brazil, and Portugal too (below) | `pt-BR` |
+| Spanish | `/clogem-support/es/` | Spain (tú, vídeo, aplicación), and Latin America too | `es-ES` |
+
+- **No script picks the language.** GitHub Pages serves files as they
+  are, and without JavaScript nothing can read the browser's language. So
+  English is the root, each other language has its folder, and every page
+  has the **language menu** at its top right: a `<details>` dropdown (owner,
+  2026-10-25: five names in a row are too many) that opens without a
+  script. It lists each language in its own words (English, 简体中文,
+  繁體中文, Português, Español) and checks the current one.
+- **Search engines** find the others from each page: a canonical address,
+  an `hreflang` link to every language, and `x-default` for English.
+- **The words** come from `site/site.edn` (English) and
+  `site/i18n/<id>.edn` (the rest), in the same shape. A translation must
+  give every word, keep each `{placeholder}`, and add nothing; `bb portal`
+  stops otherwise, and `bb test` checks each language's words and its
+  variety (no Hong Kong words in Traditional Chinese, no Portugal's in
+  Portuguese, Spain's Spanish). Names stay as they are: the apps', the
+  projects', the stores', and *Video Watermarker*, which is part of the
+  app's product name in every Store listing.
+- **Chinese** is set in Chinese fonts: Microsoft YaHei or PingFang SC for
+  Simplified, Microsoft JhengHei or PingFang TC for Traditional, after the
+  Latin face, so a system never falls back to Japanese forms.
+- **The apps' pages are in English.** From another language, their links
+  say so ("（英文）", "(em inglês)") and carry `hreflang="en"`. GitHub's
+  forms are in English too, and each translation says so.
+- **The 404 page** is one page for the whole site, in English, with a line
+  in each other language leading to its front page.
+- **No native speaker has checked the translations yet.** When one has,
+  note the date and who here.
+
+**Portuguese: why one page, for Brazil.** Brazilian and European
+Portuguese share their spelling (the 1990 Orthographic Agreement) and read
+each other without trouble, but each sounds foreign to the other's
+readers: *você* against the impersonal or *tu*, *aplicativo* against
+*aplicação*, *contato* against *contacto*, *arquivo* against *ficheiro*,
+*baixar* against *transferir*, *usuário* against *utilizador*, and the
+gerund (*estamos respondendo*) against *a* + infinitive. On a page this
+short the differences are a handful of words; nothing is misunderstood.
+Brazil has about twenty times Portugal's readers, so the page is written
+for Brazil, avoiding the words Portugal would find strangest where a
+neutral one exists. A `pt-pt` page (the Store listing already has one for
+Wmark Pro) is worth adding only if support from Portugal grows: a
+translation file, a line in `:languages`, and its folder in `OWNED`.
+
+**Adding a language:** a line in `site.edn`'s `:languages` (its folder
+name, its `lang` tag with its variety, who it is for, and its name in its
+own words), its translation in `site/i18n/`, and its folder in `OWNED`
+in `portal.yml`; `bb test` fails until all three agree. An app can never
+take a language's folder name.
 
 ### Feedback
 
@@ -142,9 +210,11 @@ owner's call, with the privacy policy changed first.
 ### Adding an app
 
 1. The app's repository publishes `<folder>/index.html` to `gh-pages`, with
-   its icon as a `data:image/svg+xml` favicon.
+   its icon as a `data:image/svg+xml` favicon. Its folder can't be a
+   language's (`zh-hans`, `zh-hant`, `pt`, `es`, `en`).
 2. Add the app to `site/site.edn`'s `:apps`: its folder, name, subtitle, one
-   line about it, and two colours from its icon for its card.
+   line about it, and two colours from its icon for its card; and its line
+   (and its store's note) in each `site/i18n/` file.
 
 It is listed once both are there, in either order.
 
