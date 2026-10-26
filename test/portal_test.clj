@@ -304,6 +304,26 @@
                                    (esc (get-in translations ["pt" :ui :features])) (esc (get-in translations ["pt" :ui :in-english])) "</a>")))
         (is (str/includes? (slurp (fs/file out "index.html")) "<a class=\"primary\" href=\"wmark-pro/\">Features &amp; support</a>"))))))
 
+(deftest an-app-page-in-the-readers-language-is-linked-as-it-is
+  ;; Wmark Pro's page in five languages (2026-10-26): each language's card
+  ;; leads to the app's page in it, once that folder is on gh-pages
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        _     (app-page! pages "wmark-pro/zh-hant" "")
+        {:keys [exit said out]} (portal! pages)
+        page  (fn [id] (slurp (fs/file out id "index.html")))
+        ui    (fn [id] (get-in translations [id :ui]))]
+    (is (zero? exit) said)
+    (testing "Traditional Chinese: the app's own Traditional Chinese page, not marked as English"
+      (is (str/includes? (page "zh-hant") (str "<a class=\"primary\" href=\"../wmark-pro/zh-hant/\">" (esc (:features (ui "zh-hant"))) "</a>")))
+      (is (str/includes? (page "zh-hant") (str "<a href=\"../wmark-pro/zh-hant/#privacy\">" (esc (:privacy (ui "zh-hant"))) "</a>")))
+      (is (not (str/includes? (page "zh-hant") (:in-english (ui "zh-hant"))))))
+    (testing "a language the app's page isn't in yet: its English page, marked"
+      (is (str/includes? (page "pt") (str "<a class=\"primary\" href=\"../wmark-pro/\" hreflang=\"en\">"
+                                          (esc (:features (ui "pt"))) (esc (:in-english (ui "pt"))) "</a>"))))
+    (testing "English: the root page, as before"
+      (is (str/includes? (slurp (fs/file out "index.html")) "<a class=\"primary\" href=\"wmark-pro/\">Features &amp; support</a>")))))
+
 (deftest every-translation-gives-every-word
   (let [english (portal/words site)]
     (doseq [[id tr] translations

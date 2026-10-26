@@ -297,9 +297,11 @@
 
 (defn published-apps
   "The apps to list: with `site-dir` (a checkout of gh-pages), those whose
-  folder holds an index.html, each with its icon; without, all of them,
-  with no icons (a preview)."
-  [apps site-dir]
+  folder holds an index.html, each with its icon and the other `languages`
+  its page is in (:languages, their :ids: a subfolder of that name with
+  an index.html, as Wmark Pro's since 2026-10-26); without, all of them,
+  with no icons and their pages in English (a preview)."
+  [apps site-dir languages]
   (if-not site-dir
     apps
     (keep (fn [{:keys [folder] :as app}]
@@ -307,7 +309,10 @@
               (if (fs/exists? page)
                 (let [icon (app-icon (slurp page))]
                   (when-not icon (warn! folder "has no icon in its page; its card shows a plain mark"))
-                  (assoc app :icon icon))
+                  (assoc app :icon icon
+                             :languages (set (for [{:keys [id]} (rest languages)
+                                                   :when (fs/exists? (fs/file site-dir folder id "index.html"))]
+                                               id))))
                 (do (warn! folder "isn't published yet (no" (str page) "); it isn't listed") nil))))
           apps)))
 
@@ -750,10 +755,14 @@
      [:p.status status])])
 
 (defn- app-card
-  "An app's card. Its page is in English: from a page in another language,
-  its links say so (:in-english) and carry hreflang."
-  [ui base english? {:keys [folder name subtitle about icon store]}]
-  (let [to-english (fn [attrs] (cond-> attrs (not english?) (assoc :hreflang "en")))]
+  "An app's card, its links to its page in `current`'s language when it
+  has one (published-apps' :languages), else in English: from a page in
+  another language, those say so (:in-english) and carry hreflang."
+  [ui base english? current {:keys [folder name subtitle about icon store languages]}]
+  (let [own?       (and (not english?) (contains? languages (:id current)))
+        page       (str folder "/" (when own? (str (:id current) "/")))
+        to-english (fn [attrs] (cond-> attrs (not (or english? own?)) (assoc :hreflang "en")))
+        marker     (if own? "" (:in-english ui))]
     [:article {:class (str "app app-" folder)}
      (if icon
        [:img.app-icon {:src icon :alt "" :width "64" :height "64"}]
@@ -768,8 +777,8 @@
          [:span [:small (:download-from ui)] [:strong (:name store)]]]
         [:span.store-note (:note store)]])
      [:nav.links {:aria-label (fill (:links-label ui) {:name name})}
-      [:a.primary (to-english {:href (href base (str folder "/"))}) (str (:features ui) (:in-english ui))]
-      [:a (to-english {:href (href base (str folder "/#privacy"))}) (str (:privacy ui) (:in-english ui))]
+      [:a.primary (to-english {:href (href base page)}) (str (:features ui) marker)]
+      [:a (to-english {:href (href base (str page "#privacy"))}) (str (:privacy ui) marker)]
       [:a {:href "#feedback"} (:feedback ui)]]]))
 
 (defn index-body
@@ -795,7 +804,7 @@
        [:section#apps {:aria-labelledby "apps-title"}
         [:h2#apps-title (:title com)]
         [:p.section-lead (:lead com)]
-        [:div.apps (map (partial app-card ui base english?) apps)]
+        [:div.apps (map (partial app-card ui base english? current) apps)]
         [:aside.next {:aria-label (:later-label ui)}
          [:span.chip (:later ui)]
          [:p (:note com)]]]
@@ -994,7 +1003,7 @@
                  (fail! (str "A translation isn't right:\n  " (str/join "\n  " problems))))
         _      (when (and site-dir (not (fs/directory? site-dir))) (fail! site-dir "isn't a folder"))
         projects (project-icons (get-in site [:open-source :projects]) (or root "."))
-        apps   (vec (published-apps (:apps site) site-dir))
+        apps   (vec (published-apps (:apps site) site-dir languages))
         _      (when (empty? apps) (fail! "No app is published yet: nothing to list."))
         listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects))]
     {:site listed

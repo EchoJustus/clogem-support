@@ -193,9 +193,14 @@ default:
   in Chinese fonts: Microsoft YaHei or PingFang SC for Simplified,
   Microsoft JhengHei or PingFang TC for Traditional, after the Latin face,
   so a system never falls back to Japanese forms.
-- **The apps' pages are in English.** From another language, their links
-  say so ("（英文）", "(em inglês)") and carry `hreflang="en"`. GitHub's
-  forms are in English too, and each translation says so.
+- **An app's page in the reader's language** is linked when its folder has
+  one: a subfolder of the language's name with an `index.html`
+  (`wmark-pro/zh-hant/`; Wmark Pro's page is in these five languages
+  since 2026-10-26). Otherwise the card links to the app's English page
+  and says so ("（英文）", "(em inglês)"), with `hreflang="en"`. The
+  front page finds out on each build, which runs after every Pages build,
+  so an app's new language is linked on its own. GitHub's forms are in
+  English, and each translation says so.
 - **The 404 page** is one page for the whole site, in English, with a line
   in each other language leading to its front page.
 - **No native speaker has checked the translations yet.** When one has,
