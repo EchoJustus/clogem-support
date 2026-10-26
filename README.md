@@ -2,8 +2,8 @@
 
 Help, contact and privacy policies for Clogem apps, and the open-source
 projects they are built on: **https://echojustus.github.io/clogem-support/**,
-also in [简体中文](https://echojustus.github.io/clogem-support/zh-hans/),
-[繁體中文](https://echojustus.github.io/clogem-support/zh-hant/),
+also in [繁體中文](https://echojustus.github.io/clogem-support/zh-hant/),
+[简体中文](https://echojustus.github.io/clogem-support/zh-hans/),
 [Português](https://echojustus.github.io/clogem-support/pt/) and
 [Español](https://echojustus.github.io/clogem-support/es/).
 
@@ -31,7 +31,7 @@ The site is this repository's `gh-pages` branch, served by GitHub Pages
 | On gh-pages | What it is | Who writes it |
 |---|---|---|
 | `index.html`, `404.html`, `.nojekyll` | the front page in English, the page for missing addresses, and "serve the files as they are" | `portal.yml` here, from `site/site.edn` |
-| `zh-hans/`, `zh-hant/`, `pt/`, `es/` | the front page in its other languages (below, "Languages") | `portal.yml` here, from `site/i18n/` |
+| `zh-hant/`, `zh-hans/`, `pt/`, `es/` | the front page in its other languages (below, "Languages") | `portal.yml` here, from `site/i18n/` |
 | `<app>/` (`wmark-pro/`, ...) | each app's page: what it is and does, its support and its privacy policy | that app's own repository, through its publishing workflow |
 
 `main` holds only the sources: GitHub counts languages on the default
@@ -71,6 +71,7 @@ Each section opens with its heading alone, with no overline repeating it
 - `site/i18n/<language>.edn`: the same words in each other language.
 - `icons/`: the open-source projects' icons, copied from the clogem icon
   set (`icons/README.md` says from where, and under which licence).
+- `fonts/`: each page's subsets of its text face (below, "Typography").
 - `scripts/portal.clj`: the generator, Babashka with the hiccup that ships
   inside it. It lists the apps whose folders are on `gh-pages`, each with
   the icon from its own page (its favicon, a `data:` SVG). An app without
@@ -83,7 +84,7 @@ Each section opens with its heading alone, with no overline repeating it
 - Like the apps' pages, each page is one self-contained file:
   - no JavaScript, no cookies, nothing loaded from another site;
   - a Content-Security-Policy that allows only the page's own style (by its
-    SHA-256) and `data:` images;
+    SHA-256), `data:` images and `data:` fonts (below, "Typography");
   - light and dark, after the visitor's system setting, or as chosen in
     the header's switcher (Auto, Light, Dark). The switcher is three radio
     buttons the stylesheet reads with `:has()`, so it needs no script; with
@@ -94,6 +95,7 @@ Each section opens with its heading alone, with no overline repeating it
 ```
 bb portal --site-dir pages   # _site/ from a checkout of gh-pages in pages/
 bb test                      # the pages' rules, and the workflow's publishing step against a local stand-in for gh-pages
+bb fonts                     # each page's subsets of Clogem Kai, after a change to the words (below, "Typography")
 ```
 
 Open `_site/index.html` in a browser to look at it.
@@ -104,12 +106,52 @@ Open `_site/index.html` in a browser to look at it.
   app's first publication then gets its card, and a new icon shows up on
   its own.
 - **Tests:** `bb test` runs first, on pull requests too.
-- **Commits:** the three root files to `gh-pages`, and nothing else.
+- **Commits:** the root files and the languages' folders to `gh-pages`,
+  and nothing else.
 - **Pages:** commits pushed with a workflow's `GITHUB_TOKEN` start no Pages
   build ("Configuring a publishing source for your GitHub Pages site",
   GitHub Docs). So whenever the live front page isn't the one just built,
   the workflow asks Pages for a build (the Pages permission), waits until
   the page is live, and fails if it isn't after ten minutes.
+
+### Typography
+
+The text is set in **Clogem Kai** (owner, 2026-10-26): subsets of
+[LXGW WenKai](https://github.com/lxgw/LxgwWenKai) (霞鹜文楷), an open
+kaishu typeface whose Latin letters come from Fontworks' Klee, so
+English, Portuguese and Spanish are written in the same hand as Chinese.
+
+- **What it sets:** everything but the headings: the leads, the cards'
+  words, the notes, the links and buttons, the theme switcher and the
+  language menu, the footer.
+- **What keeps the sans:** the headings (the page's title, the sections'
+  and the cards' headings) and the heavy labels (weight 700: the
+  overline, the badges, the store's name). A kaishu at its heaviest is a
+  thick brush; the system's sans (Segoe UI, San Francisco, Roboto, and
+  for Chinese Microsoft YaHei or JhengHei, PingFang) carries the page's
+  structure, and Kai its voice.
+- **Two weights:** regular for the text, and bold for the semibold labels
+  (links, buttons, the switcher, the menu), which the browser takes as the
+  nearest face.
+- **Traditional Chinese** takes [LXGW WenKai TC](https://github.com/lxgw/LxgwWenkaiTC),
+  whose characters follow Taiwan's Ministry of Education standard forms,
+  the ones its readers expect; every other page takes LXGW WenKai.
+- **Each page embeds its own two subsets** as WOFF2 `data:` URIs, so it
+  still loads nothing from elsewhere: the characters it sets in each
+  weight, and printable ASCII. The full fonts are 13 to 19 MB each; the
+  subsets, about 24 KB (English, Portuguese, Spanish), 89 KB (Simplified
+  Chinese) and 120 KB (Traditional Chinese), a third more in base64. The
+  pages grew from 69 KB to about 101 KB, 189 KB and 230 KB, and the 404
+  page from 19 KB to 56 KB. A browser shows the text at once and swaps
+  the face in (`font-display: swap`).
+- **After a change to the words,** `bb test` fails if a page sets a
+  character its subset lacks (the page would still work, with that
+  character in the sans): run `bb fonts`, which needs fonttools and
+  LXGW WenKai (`fonts/README.md`).
+- **The licence:** the SIL Open Font License 1.1, which reserves the names
+  "LXGW" and "霞鹜" for the unmodified fonts, so the subsets are renamed
+  Clogem Kai and keep the fonts' copyright and licence (below,
+  "License").
 
 ### Languages
 
@@ -119,8 +161,8 @@ default:
 | Language | Address | Written for | `lang` |
 |---|---|---|---|
 | English | `/clogem-support/` | everyone else too | `en` |
-| Simplified Chinese | `/clogem-support/zh-hans/` | any reader of it, in the mainland's usage (软件, 视频, 账号) | `zh-Hans` |
 | Traditional Chinese | `/clogem-support/zh-hant/` | any reader of it, in Taiwan's words (軟體, 影片, 浮水印, 專案, 帳號), not Hong Kong's | `zh-Hant-TW` |
+| Simplified Chinese | `/clogem-support/zh-hans/` | any reader of it, in the mainland's usage (软件, 视频, 账号) | `zh-Hans` |
 | Portuguese | `/clogem-support/pt/` | Brazil, and Portugal too (below) | `pt-BR` |
 | Spanish | `/clogem-support/es/` | Spain (tú, vídeo, aplicación), and Latin America too | `es-ES` |
 
@@ -129,8 +171,9 @@ default:
   English is the root, each other language has its folder, and every page
   has the **language menu** at its top right: a `<details>` dropdown (owner,
   2026-10-25: five names in a row are too many) that opens without a
-  script. It lists each language in its own words (English, 简体中文,
-  繁體中文, Português, Español) and checks the current one.
+  script. It lists each language in its own words, in this order: English,
+  繁體中文, 简体中文, Português, Español (Traditional Chinese first, owner,
+  2026-10-26), and checks the current one.
 - **Search engines** find the others from each page: a canonical address,
   an `hreflang` link to every language, and `x-default` for English.
 - **The words** come from `site/site.edn` (English) and
@@ -141,9 +184,10 @@ default:
   Portuguese, Spain's Spanish). Names stay as they are: the apps', the
   projects', the stores', and *Video Watermarker*, which is part of the
   app's product name in every Store listing.
-- **Chinese** is set in Chinese fonts: Microsoft YaHei or PingFang SC for
-  Simplified, Microsoft JhengHei or PingFang TC for Traditional, after the
-  Latin face, so a system never falls back to Japanese forms.
+- **Chinese** is set in Clogem Kai (above, "Typography"), and its headings
+  in Chinese fonts: Microsoft YaHei or PingFang SC for Simplified,
+  Microsoft JhengHei or PingFang TC for Traditional, after the Latin face,
+  so a system never falls back to Japanese forms.
 - **The apps' pages are in English.** From another language, their links
   say so ("（英文）", "(em inglês)") and carry `hreflang="en"`. GitHub's
   forms are in English too, and each translation says so.
@@ -168,8 +212,9 @@ translation file, a line in `:languages`, and its folder in `OWNED`.
 
 **Adding a language:** a line in `site.edn`'s `:languages` (its folder
 name, its `lang` tag with its variety, who it is for, and its name in its
-own words), its translation in `site/i18n/`, and its folder in `OWNED`
-in `portal.yml`; `bb test` fails until all three agree. An app can never
+own words), its translation in `site/i18n/`, its folder in `OWNED`
+in `portal.yml`, and its subsets (`bb fonts`); `bb test` fails until all
+four agree. An app can never
 take a language's folder name.
 
 ### Feedback
@@ -249,6 +294,12 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
   and the fonts in `trailers/*/sources/fonts/` are under the
   SIL Open Font License 1.1
   (each trailer's README credits them).
+- **The fonts in `fonts/`** are subsets of LXGW WenKai and LXGW WenKai TC,
+  under the SIL Open Font License 1.1 (`fonts/OFL-LXGW-WenKai.txt`,
+  `fonts/OFL-LXGW-WenKai-TC.txt`, with their copyright), renamed Clogem
+  Kai because the licence reserves the names "LXGW" and "霞鹜" for the
+  unmodified fonts; the pages embed them, which the licence allows, and
+  it doesn't cover the pages (`fonts/README.md`).
 - **Everything else:** © 2026 EchoJustus, all rights reserved. That covers
   the words in `site/`, every page on the `gh-pages` branch (including the
   apps' support pages and privacy policies), the trailers in `trailers/`

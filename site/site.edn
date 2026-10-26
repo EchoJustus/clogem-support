@@ -10,7 +10,7 @@
  :lead  "Help, contact and privacy policies for Clogem apps, and the open-source projects they are built on."
 
  ;; The languages, in the order the language menu lists them (owner,
- ;; 2026-10-25). The first is the root page, in this file's words; each
+ ;; 2026-10-25; Traditional Chinese before Simplified since 2026-10-26). The first is the root page, in this file's words; each
  ;; other one is the folder of its :id on gh-pages, in the words of
  ;; site/i18n/<id>.edn. :lang is the page's own language tag, with its
  ;; variety: Traditional Chinese in Taiwan's words, Brazil's Portuguese,
@@ -18,8 +18,8 @@
  ;; language), and :name the language in its own words.
  :languages
  [{:id "en"      :lang "en"         :hreflang "en"      :name "English"}
-  {:id "zh-hans" :lang "zh-Hans"    :hreflang "zh-Hans" :name "简体中文"}
   {:id "zh-hant" :lang "zh-Hant-TW" :hreflang "zh-Hant" :name "繁體中文"}
+  {:id "zh-hans" :lang "zh-Hans"    :hreflang "zh-Hans" :name "简体中文"}
   {:id "pt"      :lang "pt-BR"      :hreflang "pt"      :name "Português"}
   {:id "es"      :lang "es-ES"      :hreflang "es"      :name "Español"}]
 

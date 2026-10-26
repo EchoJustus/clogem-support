@@ -3,10 +3,12 @@
 (ns portal-test
   "bb portal (scripts/portal.clj): the hub's front page in its five
   languages and its 404 page, built from site/site.edn, site/i18n/ and the
-  apps' folders on gh-pages; and .github/workflows/portal.yml, whose
+  apps' folders on gh-pages, set in Clogem Kai from fonts/ (bb fonts,
+  scripts/fonts.clj); and .github/workflows/portal.yml, whose
   publishing step is run here against a local repository standing in for
   gh-pages."
   (:require [babashka.fs :as fs]
+            [fonts]
             [portal]
             [babashka.process :as p]
             [clj-yaml.core :as yaml]
@@ -214,7 +216,8 @@
         _     (app-page! pages "wmark-pro" wmark-pro-head)
         {:keys [exit said pages]} (portal! pages)]
     (is (zero? exit) said)
-    (is (= ["en" "zh-hans" "zh-hant" "pt" "es"] (map :id languages)) "the owner's five, English first")
+    (is (= ["en" "zh-hant" "zh-hans" "pt" "es"] (map :id languages))
+        "the owner's five, English first, Traditional Chinese before Simplified (2026-10-26)")
     (is (= {"en" "en" "zh-hans" "zh-Hans" "zh-hant" "zh-Hant-TW" "pt" "pt-BR" "es" "es-ES"}
            (into {} (map (juxt :id :lang) languages)))
         "Simplified Chinese; Traditional in Taiwan's words; Brazil's Portuguese; Spain's Spanish")
@@ -505,6 +508,81 @@
           (is (contains? urls (str repo "/discussions/new?category=" discussion))))))))
 
 ;; ---------------------------------------------------------------------------
+;; Clogem Kai, the text face (README, "Typography"; fonts/README.md)
+
+(def ^:private subsets (edn/read-string (slurp "fonts/subsets.edn")))
+
+(defn- subset-base64 [key weight]
+  (.encodeToString (Base64/getEncoder) ^bytes (fs/read-all-bytes (fs/file "fonts" (str key "-" weight ".woff2")))))
+
+(defn- on-path? [exe] (some #(fs/executable? (fs/file % exe)) (fs/exec-paths)))
+
+(deftest the-text-is-set-in-clogem-kai
+  ;; the owner, 2026-10-26: LXGW WenKai for all text but the headings and
+  ;; the heavy labels
+  (let [dir (temp-dir)
+        _   (app-page! dir "wmark-pro" wmark-pro-head)
+        {:keys [pages not-found]} (portal! dir)]
+    (doseq [[key html] (assoc pages "404" not-found)
+            :let [style (second (re-find #"(?s)<style>(.*?)</style>" html))
+                  faces (re-seq #"@font-face\{font-family:\"Clogem Kai\";src:url\(data:font/woff2;base64,([A-Za-z0-9+/=]+)\) format\(\"woff2\"\);font-weight:(\d+);font-style:normal;font-display:swap\}" style)
+                  rule  (fn [sel] (second (re-find (re-pattern (str "(?:^|\n)" (java.util.regex.Pattern/quote sel) "\\{font-family:([^;}]*)")) style)))]]
+      (testing key
+        (testing "embeds its own two subsets, which the CSP lets in as data: alone"
+          (is (= 2 (count faces)))
+          (is (= {"400" (subset-base64 key "regular") "700" (subset-base64 key "bold")}
+                 (into {} (for [[_ b64 w] faces] [w b64]))))
+          (is (str/includes? (str/replace html "&apos;" "'") "; font-src data:; ")))
+        (testing "sets its text in Clogem Kai, then the sans, then the page's Chinese fonts"
+          (is (re-find #"body\{[^}]*font:400 1\.0625rem/1\.7 \"Clogem Kai\",\"Segoe UI Variable Text\"[^;]*,var\(--cjk\);" style))
+          (is (str/starts-with? (rule "[lang]:not(html)") "\"Clogem Kai\",")))
+        (testing "and its headings and heavy labels in the sans"
+          (doseq [sel ["h1,h2,h3" ".eyebrow,.chip,.store strong"]]
+            (is (some? (rule sel)) sel)
+            (is (not (str/includes? (str (rule sel)) "Clogem Kai")) sel)))))))
+
+(deftest every-page-finds-its-glyphs-in-its-subsets
+  ;; after a change to the words: bb fonts (fonts/README.md)
+  (let [{:keys [languages sites]} (portal/load-site {:config "site/site.edn"})
+        pages (portal/pages sites "2026" languages)]
+    (is (= (set (keys pages)) (set (keys (:pages subsets)))))
+    (doseq [[key {:keys [body]}] pages
+            :let [made (get-in subsets [:pages key])]]
+      (testing key
+        (is (= (fonts/source-of key) (:font made)) "Taiwan's forms on the Traditional Chinese page")
+        (doseq [[w chars] (portal/needed body)
+                :let [lacking (remove (set (get made w)) chars)]]
+          (is (empty? lacking) (str (name w) " lacks " (apply str lacking) ": run bb fonts")))
+        (doseq [w ["regular" "bold"]
+                :let [f (fs/file "fonts" (str key "-" w ".woff2"))]]
+          (is (= "wOF2" (String. ^bytes (java.util.Arrays/copyOf ^bytes (fs/read-all-bytes f) 4) StandardCharsets/US_ASCII))
+              (str f)))))
+    (testing "the heavy text stays out of the subsets, and the rest is in one"
+      (let [text (portal/page-text (:body (pages "en")))]
+        (is (str/includes? (:heavy text) (get-in site [:open-source :title])))
+        (is (str/includes? (:regular text) (get-in site [:open-source :lead])))
+        (is (str/includes? (:bold text) (get-in site [:ui :source])))))
+    (testing "cut from the pinned sources"
+      (is (= (into {} (for [[k v] fonts/sources] [k (into {} (for [[w f] (:files v)] [w (:sha256 f)]))]))
+             (into {} (for [[k v] (:sources subsets)] [k (:sha256 v)])))))))
+
+(deftest the-subsets-go-by-their-own-name
+  ;; SIL Open Font License 1.1: a modified version doesn't carry a Reserved
+  ;; Font Name ("LXGW", "霞鹜"); the copyright and the licence stay
+  (if-not (on-path? "ttx")
+    (println "Skipping the subsets' names: no ttx on PATH (pip install fonttools brotli)")
+    (doseq [f (fs/glob "fonts" "*.woff2")
+            :let [xml (:out (p/shell {:out :string :err :string} "ttx" "-q" "-t" "name" "-o" "-" (str f)))
+                  records (into {} (for [[_ id v] (re-seq #"(?s)<namerecord nameID=\"(\d+)\"[^>]*>\s*(.*?)\s*</namerecord>" xml)]
+                                     [(parse-long id) v]))
+                  style (if (str/ends-with? (str f) "-bold.woff2") "Bold" "Regular")]]
+      (testing (str f)
+        (is (= #{0 1 2 4 6 13 14} (set (keys records))))
+        (is (= ["Clogem Kai" style (str "Clogem Kai " style) (str "ClogemKai-" style)] (map records [1 2 4 6])))
+        (is (re-find #"^Copyright 20\d\d" (records 0)))
+        (is (str/includes? (records 13) "SIL Open Font License, Version 1.1"))))))
+
+;; ---------------------------------------------------------------------------
 ;; The workflow
 
 (def ^:private workflow-text (slurp ".github/workflows/portal.yml"))
@@ -521,7 +599,7 @@
 (defn- stand-in!
   "A bare repository standing in for this one, its gh-pages holding two apps'
   folders and a file at the root that isn't the portal's; and the
-  workflow's working folder: this repository's scripts and words, and a
+  workflow's working folder: this repository's scripts, words and fonts, and a
   clone of gh-pages in pages/, as actions/checkout leaves them."
   []
   (let [root   (temp-dir)
@@ -537,7 +615,7 @@
     (git! seed "commit" "--quiet" "-m" "Two apps")
     (git! seed "push" "--quiet" remote "gh-pages")
     (fs/create-dirs work)
-    (doseq [d ["scripts" "site" "icons"]] (fs/copy-tree d (fs/path work d)))
+    (doseq [d ["scripts" "site" "icons" "fonts"]] (fs/copy-tree d (fs/path work d)))
     (git! work "clone" "--quiet" "--branch" "gh-pages" remote "pages")
     {:remote remote :seed seed :work work}))
 
@@ -658,6 +736,14 @@
         (is (re-find #"public domain|CC BY" readme) (str d))))
     (doseq [fonts (fs/glob "trailers" "*/sources/fonts")]
       (is (fs/exists? (fs/path fonts "OFL.txt")) "the fonts travel with their licence")))
+  (testing "the fonts: the SIL Open Font License, with their copyright and Reserved Font Names"
+    (let [main (slurp "fonts/OFL-LXGW-WenKai.txt")
+          tc   (slurp "fonts/OFL-LXGW-WenKai-TC.txt")]
+      (is (str/starts-with? main "Copyright 2021-2023 LXGW (https://github.com/lxgw/LxgwWenKai), with Reserved Font Names \"霞鹜\" and \"LXGW\"."))
+      (is (str/starts-with? tc "Copyright 2024 The LXGW WenKai Project Authors"))
+      (doseq [t [main tc]] (is (str/includes? t "SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007"))))
+    (is (str/starts-with? (slurp "fonts/README.md") "<!-- Copyright 2026 EchoJustus. All rights reserved."))
+    (is (str/starts-with? (slurp "fonts/subsets.edn") ";; Made by bb fonts")))
   (testing "LICENSE is the MIT text as it stands, so GitHub recognises it"
     (let [text (slurp "LICENSE")]
       (is (str/starts-with? text "MIT License\n\nCopyright (c) 2026 EchoJustus\n\nPermission is hereby granted, free of charge,"))
@@ -667,4 +753,5 @@
       (is (str/includes? readme "## License"))
       (is (str/includes? readme "`trailers/`"))
       (is (re-find #"public domain|CC BY" readme) "the footage's terms")
-      (is (str/includes? readme "SIL Open Font License")))))
+      (is (str/includes? readme "SIL Open Font License"))
+      (is (str/includes? readme "`fonts/`")))))
