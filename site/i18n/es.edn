@@ -28,6 +28,7 @@
   :open-source-tag       "Código abierto · {license}"
   :links-label           "Enlaces de {name}"
   :source                "Código fuente en GitHub"
+  :project-page          "Ayuda y primeros pasos"
   :get-label             "Consigue {app} en la {store}"
   :download-from         "Descárgalo en la"
   :features              "Funciones y soporte"

@@ -49,6 +49,7 @@
   :open-source-tag       "Open source · {license}"
   :links-label           "{name} links"
   :source                "Source on GitHub"
+  :project-page          "Help & getting started"
   :get-label             "Get {app} from the {store}"
   :download-from         "Download from the"
   :features              "Features & support"
@@ -69,7 +70,9 @@
  ;; 112 pixels (its README says where it comes from); :accent is two
  ;; colours from it, for the card's strip. A
  ;; project links to its source with :repo, or says :status while its
- ;; source isn't public.
+ ;; source isn't public. A project with a page of its own on this site
+ ;; names its folder on gh-pages with :page: its card links there once
+ ;; the page is published, in the reader's language when it is in it.
  :open-source
  {:title "Open-source core software"
   :lead  "The tools and libraries we build in the open. Read the code, use it, and send issues and pull requests to each project."
@@ -88,7 +91,8 @@
     :icon     "icons/clogem-press.png"
     :accent   ["#6BDDB7" "#0A7C5B"]
     :repo     "https://github.com/EchoJustus/clogem-press"
-    :license  "EPL-2.0"}
+    :license  "EPL-2.0"
+    :page     "clogem-press"}
    {:id       "clogem-wmark"
     :name     "clogem-wmark"
     :subtitle "Video watermarking, the open core"

@@ -324,6 +324,40 @@
     (testing "English: the root page, as before"
       (is (str/includes? (slurp (fs/file out "index.html")) "<a class=\"primary\" href=\"wmark-pro/\">Features &amp; support</a>")))))
 
+(deftest a-project-page-is-linked-once-published-in-the-readers-language
+  ;; clogem-press's page on this site (2026-10-26): its folders are named
+  ;; by language tag (zh-Hant/, pt-BR/), not by the hub's ids
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        _     (doseq [f ["clogem-press" "clogem-press/zh-Hant" "clogem-press/pt-BR"]] (app-page! pages f ""))
+        {:keys [exit said out not-found]} (portal! pages)
+        page  (fn [id] (slurp (fs/file out (if (= id "en") "index.html" (str id "/index.html")))))
+        ui    (fn [id] (if (= id "en") (:ui site) (get-in translations [id :ui])))
+        card  (fn [id] (second (re-find #"(?s)<article class=\"project project-clogem-press\">(.*?)</article>" (page id))))
+        repo  "https://github.com/EchoJustus/clogem-press"]
+    (is (zero? exit) said)
+    (testing "English: the page first, the source beside it"
+      (is (str/includes? (card "en") (str "<a class=\"primary\" href=\"clogem-press/\">" (esc (:project-page (ui "en"))) "</a>")))
+      (is (str/includes? (card "en") (str "<a href=\"" repo "\">" (esc (:source (ui "en"))) "</a>"))))
+    (testing "a language the page is in: its own folder, by language tag, unmarked"
+      (is (str/includes? (card "zh-hant") (str "<a class=\"primary\" href=\"../clogem-press/zh-Hant/\">" (esc (:project-page (ui "zh-hant"))) "</a>")))
+      (is (str/includes? (card "pt") (str "<a class=\"primary\" href=\"../clogem-press/pt-BR/\">" (esc (:project-page (ui "pt"))) "</a>"))))
+    (testing "a language it isn't in yet: the English page, marked"
+      (is (str/includes? (card "zh-hans") (str "<a class=\"primary\" href=\"../clogem-press/\" hreflang=\"en\">"
+                                                (esc (:project-page (ui "zh-hans"))) (esc (:in-english (ui "zh-hans"))) "</a>"))))
+    (testing "the 404 page leads there too"
+      (is (str/includes? not-found "<a href=\"https://echojustus.github.io/clogem-support/clogem-press/\">clogem-press</a>")))
+    (testing "a project without a page keeps its source alone"
+      (is (re-find #"<article class=\"project project-clogem-wmark\">.*?<nav [^>]*class=\"links\"><a class=\"primary\" href=\"https://github.com/EchoJustus/clogem-wmark\">" (page "en")))))
+  (testing "until the page is published, the card links its source alone"
+    (let [pages (temp-dir)
+          _     (app-page! pages "wmark-pro" wmark-pro-head)
+          {:keys [exit said index]} (portal! pages)]
+      (is (zero? exit) said)
+      (is (str/includes? said "project clogem-press has no page on gh-pages yet"))
+      (is (not (str/includes? index "href=\"clogem-press/\"")))
+      (is (str/includes? index "<a class=\"primary\" href=\"https://github.com/EchoJustus/clogem-press\">")))))
+
 (deftest every-translation-gives-every-word
   (let [english (portal/words site)]
     (doseq [[id tr] translations

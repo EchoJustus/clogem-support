@@ -37,6 +37,7 @@ The site is this repository's `gh-pages` branch, served by GitHub Pages
 | `index.html`, `404.html`, `.nojekyll` | the front page in English, the page for missing addresses, and "serve the files as they are" | `portal.yml` here, from `site/site.edn` |
 | `zh-hant/`, `zh-hans/`, `pt/`, `es/` | the front page in its other languages (below, "Languages") | `portal.yml` here, from `site/i18n/` |
 | `<app>/` (`wmark-pro/`, ...) | each app's page: what it is and does, its support and its privacy policy | that app's own repository, through its publishing workflow |
+| `clogem-press/` | clogem-press's page: what it is and does, getting started, help and feedback, privacy, its licence and source, in five languages (`zh-Hant/`, `zh-Hans/`, `pt-BR/`, `es-ES/`) | clogem-press's own repository, through its publishing workflow |
 
 `main` holds only the sources: GitHub counts languages on the default
 branch, so built HTML never shows up there.
@@ -62,7 +63,10 @@ Three parts, in this order (owner, 2026-10-02; the apps first since
    editions as they mature.
 2. **Open-source core software:** clogem-hstry, clogem-press and
    clogem-wmark, each with its icon and a link to its source (or, while
-   the source isn't public, a line that says so).
+   the source isn't public, a line that says so). A project with a page
+   of its own here (`:page` in `site.edn`: clogem-press's, at
+   `https://echojustus.github.io/clogem-support/clogem-press/`) links to
+   it first, as "Help & getting started", once it is published.
 3. **Feedback & support:** the Discussions categories and the bug report
    form (below, "Feedback"), and the business address for what shouldn't
    be public.
@@ -197,14 +201,15 @@ default:
   in Chinese fonts: Microsoft YaHei or PingFang SC for Simplified,
   Microsoft JhengHei or PingFang TC for Traditional, after the Latin face,
   so a system never falls back to Japanese forms.
-- **An app's page in the reader's language** is linked when its folder has
-  one: a subfolder of the language's name with an `index.html`
-  (`wmark-pro/zh-hant/`; Wmark Pro's page is in these five languages
-  since 2026-10-26). Otherwise the card links to the app's English page
-  and says so ("（英文）", "(em inglês)"), with `hreflang="en"`. The
-  front page finds out on each build, which runs after every Pages build,
-  so an app's new language is linked on its own. GitHub's forms are in
-  English, and each translation says so.
+- **An app's or a project's page in the reader's language** is linked
+  when its folder has one: a subfolder with an `index.html`, named by the
+  language's id here or by its language tag (`wmark-pro/zh-hant/`,
+  `clogem-press/zh-Hant/`, `clogem-press/pt-BR/`; both pages are in these
+  five languages since 2026-10-26). Otherwise the card links to the
+  English page and says so ("（英文）", "(em inglês)"), with
+  `hreflang="en"`. The front page finds out on each build, which runs
+  after every Pages build, so a page's new language is linked on its own.
+  GitHub's forms are in English, and each translation says so.
 - **The 404 page** is one page for the whole site, in English, with a line
   in each other language leading to its front page.
 - **No native speaker has checked the translations yet.** When one has,
@@ -276,6 +281,11 @@ owner's call, with the privacy policy changed first.
    (and its store's note) in each `site/i18n/` file.
 
 It is listed once both are there, in either order.
+
+**A project's page** works the same way: its repository publishes
+`<folder>/index.html`, and its entry in `:open-source` names that folder
+with `:page` (not a language's or an app's). Until the page is there,
+the card links its source alone.
 
 ## Store trailers
 

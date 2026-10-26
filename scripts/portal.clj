@@ -88,7 +88,9 @@
                   (when (and (some? repo) (not (text? license)))
                     "with a :repo, it names its :license")
                   (when (and (some? status) (not (text? status)))
-                    "its :status must be text")]
+                    "its :status must be text")
+                  (when (and (some? (:page project)) (not (and (string? (:page project)) (re-matches one-name (:page project)))))
+                    "its :page must be one lowercase name (its folder on gh-pages)")]
          :when problem]
      (str "project " (pr-str (or id project)) ": " problem))))
 
@@ -161,7 +163,7 @@
   templates: {app}, {store}, {name} and {license} are filled in."
   [:heading :description-tail :on-this-page :jump-apps :jump-open-source :jump-feedback
    :language :theme :theme-auto :theme-auto-title :theme-light :theme-light-title
-   :theme-dark :theme-dark-title :later :later-label :open-source-tag :links-label :source
+   :theme-dark :theme-dark-title :later :later-label :open-source-tag :links-label :source :project-page
    :get-label :download-from :features :privacy :feedback :in-english :browse
    :business-title :business-about :footer-privacy
    :not-found-title :not-found-text :not-found-where :not-found-description])
@@ -189,6 +191,9 @@
    (check-ui ui)
    (check-projects open-source)
    (check-apps commercial apps (map :id languages))
+   (for [{:keys [id page]} (:projects open-source)
+         :when (and page (or (contains? (set (map :id languages)) page) (contains? (set (map :folder apps)) page)))]
+     (str "project " (pr-str id) ": its :page is a language's or an app's folder"))
    (check-feedback feedback)))
 
 ;; ---------------------------------------------------------------------------
@@ -295,12 +300,24 @@
   (when-let [link (re-find #"<link\b[^>]*\brel=\"icon\"[^>]*>" html)]
     (second (re-find #"\bhref=\"(data:image/svg\+xml;base64,[A-Za-z0-9+/]+={0,2})\"" link))))
 
+(defn language-folders
+  "The other `languages` a page in `folder` of `site-dir` is in, by :id: the
+  subfolder holding that language's index.html, named by the hub's :id
+  (wmark-pro/zh-hant/) or by a language tag, its :hreflang or its :lang
+  (clogem-press/zh-Hant/, clogem-press/pt-BR/)."
+  [site-dir folder languages]
+  (into {} (for [{:keys [id hreflang lang]} (rest languages)
+                 :let [sub (some #(when (fs/exists? (fs/file site-dir folder % "index.html")) %)
+                                 (distinct [id hreflang lang]))]
+                 :when sub]
+             [id sub])))
+
 (defn published-apps
   "The apps to list: with `site-dir` (a checkout of gh-pages), those whose
   folder holds an index.html, each with its icon and the other `languages`
-  its page is in (:languages, their :ids: a subfolder of that name with
-  an index.html, as Wmark Pro's since 2026-10-26); without, all of them,
-  with no icons and their pages in English (a preview)."
+  its page is in (:languages, from language-folders; Wmark Pro's since
+  2026-10-26); without, all of them, with no icons and their pages in
+  English (a preview)."
   [apps site-dir languages]
   (if-not site-dir
     apps
@@ -309,12 +326,28 @@
               (if (fs/exists? page)
                 (let [icon (app-icon (slurp page))]
                   (when-not icon (warn! folder "has no icon in its page; its card shows a plain mark"))
-                  (assoc app :icon icon
-                             :languages (set (for [{:keys [id]} (rest languages)
-                                                   :when (fs/exists? (fs/file site-dir folder id "index.html"))]
-                                               id))))
+                  (assoc app :icon icon :languages (language-folders site-dir folder languages)))
                 (do (warn! folder "isn't published yet (no" (str page) "); it isn't listed") nil))))
           apps)))
+
+(defn published-pages
+  "The projects, each with a :page (its folder on gh-pages) linked once it
+  is published: with `site-dir`, a project whose page isn't there yet
+  loses its :page (its card links its source alone), and one that is gains
+  the other `languages` it is in (:languages, from language-folders);
+  without, every :page is kept, in English (a preview)."
+  [projects site-dir languages]
+  (if-not site-dir
+    projects
+    (mapv (fn [{:keys [id page] :as project}]
+            (cond
+              (nil? page) project
+              (fs/exists? (fs/file site-dir page "index.html"))
+              (assoc project :languages (language-folders site-dir page languages))
+              :else
+              (do (warn! "project" id "has no page on gh-pages yet (no" (str (fs/file site-dir page "index.html")) "); its card links its source alone")
+                  (dissoc project :page))))
+          projects)))
 
 ;; ---------------------------------------------------------------------------
 ;; The look: the clogem family's hues on a quiet ground, light and dark
@@ -747,27 +780,43 @@
 (defn- mailto [email subject]
   (str "mailto:" email "?subject=" (str/replace (URLEncoder/encode ^String subject "UTF-8") "+" "%20")))
 
-(defn- project-card [ui {:keys [id name subtitle about icon-uri repo license status]}]
-  [:article {:class (str "project project-" id)}
-   [:img.app-icon {:src icon-uri :alt "" :width "56" :height "56"}]
-   [:h3 name]
-   [:p.sub subtitle]
-   [:p.about about]
-   (if repo
-     (list
-      [:span.tag (fill (:open-source-tag ui) {:license license})]
-      [:nav.links {:aria-label (fill (:links-label ui) {:name name})}
-       [:a.primary {:href repo} (:source ui)]])
-     [:p.status status])])
+(defn- page-in
+  "The path of the page in `folder`, in `current`'s language when it has
+  one (`languages`, from language-folders), else the folder's root (in
+  English); and whether it is in `current`'s own language."
+  [folder languages current english?]
+  (let [sub (when-not english? (get languages (:id current)))]
+    [(str folder "/" (when sub (str sub "/"))) (boolean (or english? sub))]))
+
+(defn- project-card
+  "A project's card: its source, and its own page on this site when it has
+  one (published-pages' :page), in `current`'s language when the page is
+  in it, else in English, marked as an app's is."
+  [ui base english? current {:keys [id name subtitle about icon-uri repo license status page languages]}]
+  (let [[path own?] (when page (page-in page languages current english?))
+        page-link   (when page
+                      [:a.primary (cond-> {:href (href base path)} (not own?) (assoc :hreflang "en"))
+                       (str (:project-page ui) (if own? "" (:in-english ui)))])
+        links       (when (or page repo)
+                      [:nav.links {:aria-label (fill (:links-label ui) {:name name})}
+                       page-link
+                       (when repo [(if page :a :a.primary) {:href repo} (:source ui)])])]
+    [:article {:class (str "project project-" id)}
+     [:img.app-icon {:src icon-uri :alt "" :width "56" :height "56"}]
+     [:h3 name]
+     [:p.sub subtitle]
+     [:p.about about]
+     (if repo
+       (list [:span.tag (fill (:open-source-tag ui) {:license license})] links)
+       (list [:p.status status] links))]))
 
 (defn- app-card
   "An app's card, its links to its page in `current`'s language when it
   has one (published-apps' :languages), else in English: from a page in
   another language, those say so (:in-english) and carry hreflang."
   [ui base english? current {:keys [folder name subtitle about icon store languages]}]
-  (let [own?       (and (not english?) (contains? languages (:id current)))
-        page       (str folder "/" (when own? (str (:id current) "/")))
-        to-english (fn [attrs] (cond-> attrs (not (or english? own?)) (assoc :hreflang "en")))
+  (let [[page own?] (page-in folder languages current english?)
+        to-english (fn [attrs] (cond-> attrs (not own?) (assoc :hreflang "en")))
         marker     (if own? "" (:in-english ui))]
     [:article {:class (str "app app-" folder)}
      (if icon
@@ -817,7 +866,7 @@
        [:section#open-source {:aria-labelledby "open-source-title"}
         [:h2#open-source-title (:title os)]
         [:p.section-lead (:lead os)]
-        [:div.projects (map (partial project-card ui) projects)]]
+        [:div.projects (map (partial project-card ui base english? current) projects)]]
        [:section#feedback {:aria-labelledby "feedback-title"}
         [:h2#feedback-title (:title fb)]
         [:p.section-lead (:lead fb)]
@@ -856,7 +905,9 @@
         [:nav.links {:aria-label (:not-found-where ui)}
          [:a.primary {:href base} (:title site)]
          (for [{:keys [folder name]} (:apps site)]
-           [:a {:href (str base folder "/")} name])]
+           [:a {:href (str base folder "/")} name])
+         (for [{:keys [page name]} (get-in site [:open-source :projects]) :when page]
+           [:a {:href (str base page "/")} name])]
         [:div.elsewhere
          (for [l (rest languages)
                :let [s (sites (:id l))]]
@@ -1008,7 +1059,7 @@
                                                 translations))]
                  (fail! (str "A translation isn't right:\n  " (str/join "\n  " problems))))
         _      (when (and site-dir (not (fs/directory? site-dir))) (fail! site-dir "isn't a folder"))
-        projects (project-icons (get-in site [:open-source :projects]) (or root "."))
+        projects (published-pages (project-icons (get-in site [:open-source :projects]) (or root ".")) site-dir languages)
         apps   (vec (published-apps (:apps site) site-dir languages))
         _      (when (empty? apps) (fail! "No app is published yet: nothing to list."))
         listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects))]

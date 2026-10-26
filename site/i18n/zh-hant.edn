@@ -29,6 +29,7 @@
   :open-source-tag       "開放原始碼 · {license}"
   :links-label           "{name} 的連結"
   :source                "GitHub 上的原始碼"
+  :project-page          "說明與入門"
   :get-label             "從 {store} 取得 {app}"
   :download-from         "下載自"
   :features              "功能與支援"
