@@ -23,6 +23,10 @@ also in [繁體中文](https://echojustus.github.io/clogem-support/zh-hant/),
 The open-source projects (clogem-wmark, clogem-press) take issues and
 pull requests in their own repositories.
 
+**Maintainers,** Claude and other AI agents included: read `CLAUDE.md`
+first. It holds the rules every page here keeps, such as how a footer
+names the copyright holder (`EchoJustus (Jiapeng Ji)`, in full).
+
 ## How the site is made
 
 The site is this repository's `gh-pages` branch, served by GitHub Pages

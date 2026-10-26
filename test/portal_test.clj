@@ -373,6 +373,25 @@
     (is (str/includes? style "[lang]:not(html){font-family:") "and a name in another language, in the menu, takes its own")
     (is (str/includes? style ":lang(zh) :is(h1,h2){letter-spacing:0}"))))
 
+(deftest every-footer-names-the-publisher-in-full
+  ;; CLAUDE.md, "Footer copyright notices" (owner, 2026-10-26): the hub's
+  ;; pages name the publisher alone, never shortened or split
+  (let [pages (temp-dir)
+        _     (app-page! pages "wmark-pro" wmark-pro-head)
+        {:keys [pages not-found]} (portal! pages)
+        year  (str (java.time.Year/now))]
+    (is (= "EchoJustus (Jiapeng Ji)" portal/copyright-holder))
+    (doseq [[n html] (assoc pages "404" not-found)]
+      (is (= [(str "© " year " EchoJustus (Jiapeng Ji).")]
+             (map second (re-seq #"<footer><p>([^<]*)</p>" html)))
+          n))
+    (testing "the policy is written down for the next maintainer, whatever the agent"
+      (let [policy (slurp "CLAUDE.md")]
+        (is (str/includes? policy "## Footer copyright notices"))
+        (is (str/includes? policy "© 2026 EchoJustus (Jiapeng Ji). Wmark Pro: Video Watermarker."))
+        (is (str/includes? policy "© 2026 EchoJustus (Jiapeng Ji).\n")))
+      (is (str/includes? (slurp "AGENTS.md") "Read `CLAUDE.md`")))))
+
 (deftest the-404-page-speaks-every-language
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)
@@ -796,6 +815,9 @@
     (let [text (slurp "LICENSE")]
       (is (str/starts-with? text "MIT License\n\nCopyright (c) 2026 EchoJustus\n\nPermission is hereby granted, free of charge,"))
       (is (str/ends-with? text "OTHER DEALINGS IN THE\nSOFTWARE.\n"))))
+  (testing "the maintainers' rules: all rights reserved, outside the MIT license"
+    (doseq [f ["CLAUDE.md" "AGENTS.md"]]
+      (is (str/starts-with? (slurp f) "<!-- Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support. -->") f)))
   (testing "the README draws the line"
     (let [readme (slurp "README.md")]
       (is (str/includes? readme "## License"))
