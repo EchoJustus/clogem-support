@@ -2,8 +2,10 @@
 ;; SPDX-License-Identifier: MIT
 {:paths ["scripts" "test"]
  :tasks
- {portal {:doc  "The hub's front page in five languages: index.html, zh-hans/, zh-hant/, pt/, es/, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn, site/i18n/)"
+ {portal {:doc  "The hub's front page in five languages: index.html, zh-hant/, zh-hans/, pt/, es/, 404.html and .nojekyll into _site/ (--out DIR elsewhere), listing the apps published in --site-dir DIR, a checkout of gh-pages (scripts/portal.clj, site/site.edn, site/i18n/)"
           :task (apply shell "bb" "scripts/portal.clj" *command-line-args*)}
+  fonts  {:doc  "Clogem Kai, the pages' text face: each page's subsets of LXGW WenKai (WenKai TC for Traditional Chinese) into fonts/, after a change to the words (scripts/fonts.clj; needs pyftsubset: pip install fonttools brotli; apt install fonts-lxgw-wenkai)"
+          :task (apply shell "bb" "scripts/fonts.clj" *command-line-args*)}
   trailer {:doc      "A Store trailer: bb trailer --sources DIR [--trailer trailers/wmark-pro] [--quality repo|store] (scripts/trailer/main.clj; trailers/wmark-pro/README.md)"
            :requires ([trailer.main])
            :task     (apply trailer.main/-main *command-line-args*)}

@@ -17,7 +17,7 @@
   they are.
 
   In five languages (owner, 2026-10-25): English at the root, from
-  site.edn, and one folder per other language (zh-hans/, zh-hant/, pt/,
+  site.edn, and one folder per other language (zh-hant/, zh-hans/, pt/,
   es/), from site/i18n/<id>.edn, which must give every word site.edn
   gives (--i18n DIR reads them elsewhere). Without a script nothing picks
   the visitor's language: each page links to the others from a dropdown
@@ -398,18 +398,54 @@
   ["--bg" "--glow-1" "--glow-2" "--surface" "--surface-2" "--border" "--text" "--muted"
    "--heading" "--link" "--chip" "--chip-ink" "--focus" "--store" "--store-ink" "--store-hover"])
 
+(def ^:private latin-text
+  "\"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,\"Helvetica Neue\",Arial")
+
+(def ^:private latin-display
+  "\"Segoe UI Variable Display\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto")
+
+(def kai-family
+  "The text face: subsets of LXGW WenKai (or LXGW WenKai TC on the
+  Traditional Chinese page) made by bb fonts. The font's licence reserves
+  its names for unmodified fonts, so the subsets go by a name of our own."
+  "Clogem Kai")
+
+(def ^:private text-stack
+  "Every text in Clogem Kai, a glyph it lacks in the sans, then in the
+  page's Chinese fonts (--cjk)."
+  (str "\"" kai-family "\"," latin-text ",var(--cjk)"))
+
+(def ^:private sans-stack (str latin-text ",var(--cjk)"))
+
+(def ^:private display-stack (str latin-display ",var(--cjk)"))
+
+(defn- font-faces
+  "Clogem Kai's two faces for one page, as @font-face rules with data:
+  URIs: the regular, and the bold that its semibold labels take."
+  [{:keys [regular bold]}]
+  (for [[weight b64] [[400 regular] [700 bold]] :when b64]
+    (str "@font-face{font-family:\"" kai-family "\";src:url(data:font/woff2;base64," b64 ") format(\"woff2\");"
+         "font-weight:" weight ";font-style:normal;font-display:swap}")))
+
 (defn css
   "The page's styles, one accent rule per app and project (inline style
-  attributes would need the CSP to allow them).
+  attributes would need the CSP to allow them), with the page's subsets of
+  Clogem Kai (`fonts`, from read-fonts).
 
   The theme follows the system, or the switcher in the header: three radio
   buttons, read by :has() on the root, so it takes no script. Without a
   script or a cookie the choice isn't remembered: each page opens on
-  Auto."
-  [apps projects]
+  Auto.
+
+  The text is set in Clogem Kai (owner, 2026-10-26), but for headings and
+  heavy labels (weight 700: h1 to h3, .eyebrow, .chip, the store's name),
+  which keep the sans. Semibold labels (600 and 650: buttons, links, the
+  switcher, the language menu) take Kai's bold. page-text mirrors this."
+  [apps projects fonts]
   (str/join
    "\n"
    (concat
+    (font-faces fonts)
     (for [t colour-tokens]
       (str "@property " t "{syntax:\"<color>\";inherits:true;initial-value:transparent}"))
     [(str ":root{color-scheme:light dark;" light ";"
@@ -427,13 +463,14 @@
      (str "body{margin:0;min-height:100vh;color:var(--text);background:"
           "radial-gradient(1100px 560px at 8% -12%,var(--glow-1),transparent 62%),"
           "radial-gradient(900px 520px at 100% -4%,var(--glow-2),transparent 58%),var(--bg);"
-          "font:400 1rem/1.65 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,\"Helvetica Neue\",Arial,var(--cjk);"
+          "font:400 1.0625rem/1.7 " text-stack ";"
           "-webkit-font-smoothing:antialiased}")
-     "[lang]:not(html){font-family:\"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,\"Helvetica Neue\",Arial,var(--cjk)}"
+     (str "[lang]:not(html){font-family:" text-stack "}")
      ".page{max-width:62rem;margin:0 auto;padding:clamp(2.5rem,7vw,5.5rem) 1.25rem 2.5rem}"
      "a{color:var(--link);text-underline-offset:.18em}"
      "a:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:.45rem}"
-     "h1,h2,h3{font-family:\"Segoe UI Variable Display\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto,var(--cjk);color:var(--heading)}"
+     (str "h1,h2,h3{font-family:" display-stack ";color:var(--heading)}")
+     (str ".eyebrow,.chip,.store strong{font-family:" sans-stack "}")
      ;; the header
      ".hero{display:grid;gap:1.4rem}"
      ".top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem 1.5rem}"
@@ -561,12 +598,13 @@
       (format ".project-%s::before{background:linear-gradient(90deg,%s,%s)}" id (first accent) (second accent))))))
 
 (defn csp
-  "Nothing but the page's own style (by the SHA-256 of `style`) and data:
-  images (the favicon and the apps' and projects' icons)."
+  "Nothing but the page's own style (by the SHA-256 of `style`), data:
+  images (the favicon and the apps' and projects' icons) and data: fonts
+  (its subsets of Clogem Kai)."
   [style]
   (let [digest (.digest (MessageDigest/getInstance "SHA-256") (.getBytes ^String style StandardCharsets/UTF_8))]
     (str "default-src 'none'; style-src 'sha256-" (.encodeToString (Base64/getEncoder) digest) "'; "
-         "img-src data:; base-uri 'none'; form-action 'none'")))
+         "img-src data:; font-src data:; base-uri 'none'; form-action 'none'")))
 
 ;; ---------------------------------------------------------------------------
 ;; The pages
@@ -715,97 +753,188 @@
       [:a (to-english {:href (href base (str folder "/#privacy"))}) (str (:privacy ui) (:in-english ui))]
       [:a {:href "#feedback"} (:feedback ui)]]]))
 
-(defn index-page
-  "The front page in the language `current`, from `site` in its words (see
-  localize): the commercial apps, the open-source projects, then feedback
-  and support. Its projects carry their icons (project-icons), its apps
-  theirs (published-apps)."
+(defn index-body
+  "The front page's <body> in the language `current`, from `site` in its
+  words (see localize): the commercial apps, the open-source projects,
+  then feedback and support. Its projects carry their icons
+  (project-icons), its apps theirs (published-apps)."
   [site year languages current]
   (let [projects (get-in site [:open-source :projects])
         apps     (:apps site)
-        style    (css apps projects)
         ui       (:ui site)
         english? (= (:id current) (:id (first languages)))
         base     (if english? "" "../")
         {os :open-source com :commercial fb :feedback} site]
-    (str
-     "<!doctype html>\n"
-     (h/html
-      {:mode :html}
-      [:html {:lang (:lang current)}
-       (head site style (:title site) (then (:lead site) (:description-tail ui)) languages current)
-       [:body
-        [:div.page
-         (header site languages current base
-                 [:nav.jump {:aria-label (:on-this-page ui)}
-                  [:a {:href "#apps"} (:jump-apps ui)]
-                  [:a {:href "#open-source"} (:jump-open-source ui)]
-                  [:a {:href "#feedback"} (:jump-feedback ui)]])
-         [:main
-          [:section#apps {:aria-labelledby "apps-title"}
-           [:h2#apps-title (:title com)]
-           [:p.section-lead (:lead com)]
-           [:div.apps (map (partial app-card ui base english?) apps)]
-           [:aside.next {:aria-label (:later-label ui)}
-            [:span.chip (:later ui)]
-            [:p (:note com)]]]
-          [:section#open-source {:aria-labelledby "open-source-title"}
-           [:h2#open-source-title (:title os)]
-           [:p.section-lead (:lead os)]
-           [:div.projects (map (partial project-card ui) projects)]]
-          [:section#feedback {:aria-labelledby "feedback-title"}
-           [:h2#feedback-title (:title fb)]
-           [:p.section-lead (:lead fb)]
-           [:div.channels
-            (for [{:keys [badge title about action] :as ch} (:channels fb)]
-              [:article.channel
-               [:span.chip badge]
-               [:h3 title]
-               [:p about]
-               [:a.button {:href (channel-url (:repo fb) ch)} action [:span {:aria-hidden "true"} "→"]]])]
-           [:p.fine (then (:note fb) "") [:a {:href (str (:repo fb) "/discussions")} (:browse ui)]]
-           [:div.help
-            [:div.help-item
-             [:h3 (:business-title ui)]
-             [:p (:business-about ui)]
-             [:p [:a.go {:href (mailto (:business site) "Clogem")} (:business site)]]]]]]
-         (footer ui year)]]]))))
+    [:body
+     [:div.page
+      (header site languages current base
+              [:nav.jump {:aria-label (:on-this-page ui)}
+               [:a {:href "#apps"} (:jump-apps ui)]
+               [:a {:href "#open-source"} (:jump-open-source ui)]
+               [:a {:href "#feedback"} (:jump-feedback ui)]])
+      [:main
+       [:section#apps {:aria-labelledby "apps-title"}
+        [:h2#apps-title (:title com)]
+        [:p.section-lead (:lead com)]
+        [:div.apps (map (partial app-card ui base english?) apps)]
+        [:aside.next {:aria-label (:later-label ui)}
+         [:span.chip (:later ui)]
+         [:p (:note com)]]]
+       [:section#open-source {:aria-labelledby "open-source-title"}
+        [:h2#open-source-title (:title os)]
+        [:p.section-lead (:lead os)]
+        [:div.projects (map (partial project-card ui) projects)]]
+       [:section#feedback {:aria-labelledby "feedback-title"}
+        [:h2#feedback-title (:title fb)]
+        [:p.section-lead (:lead fb)]
+        [:div.channels
+         (for [{:keys [badge title about action] :as ch} (:channels fb)]
+           [:article.channel
+            [:span.chip badge]
+            [:h3 title]
+            [:p about]
+            [:a.button {:href (channel-url (:repo fb) ch)} action [:span {:aria-hidden "true"} "→"]]])]
+        [:p.fine (then (:note fb) "") [:a {:href (str (:repo fb) "/discussions")} (:browse ui)]]
+        [:div.help
+         [:div.help-item
+          [:h3 (:business-title ui)]
+          [:p (:business-about ui)]
+          [:p [:a.go {:href (mailto (:business site) "Clogem")} (:business site)]]]]]]
+      (footer ui year)]]))
 
-(defn not-found-page
-  "The 404 page GitHub Pages shows for any address in the hub that isn't
-  there, in English, with a line in each other language. Its links are
-  absolute: it is served at the missing address. `sites` are site.edn in
-  each language's words, by :id."
+(defn not-found-body
+  "The <body> of the 404 page GitHub Pages shows for any address in the
+  hub that isn't there, in English, with a line in each other language.
+  Its links are absolute: it is served at the missing address. `sites`
+  are site.edn in each language's words, by :id."
   [sites year languages]
   (let [english (first languages)
         site    (sites (:id english))
         ui      (:ui site)
-        style   (css (:apps site) [])
         base    (:url site)]
+    [:body
+     [:div.page
+      (header site languages english base)
+      [:main
+       [:section.notfound {:aria-labelledby "nf-title"}
+        [:h2#nf-title (:not-found-title ui)]
+        [:p (:not-found-text ui)]
+        [:nav.links {:aria-label (:not-found-where ui)}
+         [:a.primary {:href base} (:title site)]
+         (for [{:keys [folder name]} (:apps site)]
+           [:a {:href (str base folder "/")} name])]
+        [:div.elsewhere
+         (for [l (rest languages)
+               :let [s (sites (:id l))]]
+           [:p {:lang (:lang l)}
+            (then (get-in s [:ui :not-found-text]) "")
+            [:a {:href (str base (folder languages l)) :hreflang (:hreflang l)} (:title s)]])]]]
+      (footer ui year)]]))
+
+(defn pages
+  "Every page the front page publishes, by key (a language's :id, or
+  \"404\"): what its <head> needs and its <body>. `sites` are site.edn in
+  each language's words, by :id."
+  [sites year languages]
+  (let [english (first languages)
+        site    (sites (:id english))
+        ui      (:ui site)]
+    (into {"404" {:site site :lang english :current nil :file "404.html"
+                  :title (str (:not-found-title ui) ": " (:title site))
+                  :description (:not-found-description ui)
+                  :apps (:apps site) :projects []
+                  :body (not-found-body sites year languages)}}
+          (for [l languages
+                :let [s (sites (:id l))]]
+            [(:id l) {:site s :lang l :current l :file (str (folder languages l) "index.html")
+                      :title (:title s)
+                      :description (then (:lead s) (get-in s [:ui :description-tail]))
+                      :apps (:apps s) :projects (get-in s [:open-source :projects])
+                      :body (index-body s year languages l)}]))))
+
+(defn page-html
+  "A page from `pages`, with its subsets of Clogem Kai (`fonts`)."
+  [languages {:keys [site lang current title description apps projects body]} fonts]
+  (let [style (css apps projects fonts)]
     (str
      "<!doctype html>\n"
      (h/html
       {:mode :html}
-      [:html {:lang (:lang english)}
-       (head site style (str (:not-found-title ui) ": " (:title site)) (:not-found-description ui) languages nil)
-       [:body
-        [:div.page
-         (header site languages english base)
-         [:main
-          [:section.notfound {:aria-labelledby "nf-title"}
-           [:h2#nf-title (:not-found-title ui)]
-           [:p (:not-found-text ui)]
-           [:nav.links {:aria-label (:not-found-where ui)}
-            [:a.primary {:href base} (:title site)]
-            (for [{:keys [folder name]} (:apps site)]
-              [:a {:href (str base folder "/")} name])]
-           [:div.elsewhere
-            (for [l (rest languages)
-                  :let [s (sites (:id l))]]
-              [:p {:lang (:lang l)}
-               (then (get-in s [:ui :not-found-text]) "")
-               [:a {:href (str base (folder languages l)) :hreflang (:hreflang l)} (:title s)]])]]]
-         (footer ui year)]]]))))
+      [:html {:lang (:lang lang)}
+       (head site style title description languages current)
+       body]))))
+
+;; ---------------------------------------------------------------------------
+;; The text, by the face it is set in (for bb fonts and the tests)
+
+(def ^:private heavy-classes
+  "Classes set at weight 700, in the sans: no subset needed."
+  #{"eyebrow" "chip"})
+
+(def ^:private semibold-classes
+  "Classes whose text is set at 600 or 650: Clogem Kai's bold. (The
+  switcher's labels, the links and buttons, the licence tag, the business
+  address.)"
+  #{"jump" "links" "button" "theme" "tag" "go"})
+
+(defn- tag-parts
+  "A hiccup tag's name and its classes: :a.primary -> [:a #{\"primary\"}]."
+  [kw]
+  (let [[_ tag more] (re-matches #"([a-z0-9]+)(.*)" (name kw))]
+    [(keyword tag) (set (map second (re-seq #"\.([A-Za-z0-9_-]+)" more)))]))
+
+(defn- weight-of
+  "The face an element's text is set in, as the stylesheet sets it: :heavy
+  (the sans), :bold or :regular (Clogem Kai's), else its parent's."
+  [tag classes attrs inherited]
+  (cond (or (#{:h1 :h2 :h3 :strong} tag) (some heavy-classes classes)) :heavy
+        (or (#{:summary :small} tag) (some semibold-classes classes)
+            (and (= :a tag) (= "page" (:aria-current attrs)))) :bold
+        :else inherited))
+
+(defn page-text
+  "The text of a page's hiccup `body`, by the face it is set in: :regular
+  and :bold (Clogem Kai's, which bb fonts subsets) and :heavy (the sans).
+  Markup that isn't text (raw SVG, attributes) is left out."
+  [body]
+  (letfn [(walk [acc node w]
+            (cond (string? node) (update acc w str node)
+                  (vector? node) (let [[t & more] node
+                                       attrs (when (map? (first more)) (first more))
+                                       kids  (if attrs (rest more) more)
+                                       [tag classes] (tag-parts t)
+                                       classes (into classes (some-> (:class attrs) (str/split #"\s+")))]
+                                   (reduce #(walk %1 %2 (weight-of tag classes attrs w)) acc kids))
+                  (seq? node) (reduce #(walk %1 %2 w) acc node)
+                  :else acc))]
+    (walk {:regular "" :bold "" :heavy ""} body :regular)))
+
+(defn needed
+  "The characters a page sets in Clogem Kai, by face: {:regular #{} :bold #{}}."
+  [body]
+  (let [text (page-text body)
+        chars (fn [s] (into (sorted-set) (remove #(Character/isWhitespace (int %))) s))]
+    {:regular (chars (:regular text)) :bold (chars (:bold text))}))
+
+(defn read-fonts
+  "A page's subsets of Clogem Kai from `dir` (bb fonts makes them), as
+  base64: {:regular .. :bold ..}. Warns when the page sets a character its
+  subset lacks (it then falls back to the sans), as after an edit to the
+  words without bb fonts; bb test fails on it."
+  [dir key body]
+  (let [file (fn [w] (fs/file dir (str key "-" w ".woff2")))
+        b64  (fn [f] (.encodeToString (Base64/getEncoder) ^bytes (fs/read-all-bytes f)))
+        made (some-> (fs/file dir "subsets.edn") (#(when (fs/exists? %) (edn/read-string (slurp %)))) :pages (get key))]
+    (when-not (every? fs/exists? [(file "regular") (file "bold")])
+      (fail! (str "Clogem Kai's subsets for " key " aren't in " dir ": run bb fonts (README, \"Typography\")")))
+    (doseq [[w chars] (needed body)
+            :let [lacking (remove (set (get made w "")) chars)]
+            :when (seq lacking)]
+      (warn! key "sets characters its" (name w) "subset lacks (run bb fonts):" (apply str lacking)))
+    {:regular (b64 (file "regular")) :bold (b64 (file "bold"))}))
+
+;; ---------------------------------------------------------------------------
+;; The site in its languages
 
 (defn- read-translations
   "Each language's translation but the first's, from `dir`: [id map]."
@@ -816,43 +945,56 @@
            [id (edn/read-string (slurp f))]
            (fail! (str "The " id " translation isn't there: " f))))))
 
-(defn -main [& args]
-  (let [valued #{"--out" "--site-dir" "--config" "--root" "--i18n"}
-        opts   (loop [[a & more :as as] args, out {}]
-                 (cond (empty? as) out
-                       (valued a)  (if (seq more) (recur (rest more) (assoc out a (first more)))
-                                       (fail! a "needs a value"))
-                       :else       (fail! "bb portal [--site-dir DIR] [--out DIR] [--i18n DIR], not" a)))
-        config (get opts "--config" "site/site.edn")
-        site   (edn/read-string (slurp config))
+(defn load-site
+  "site.edn from `config` and its translations from `i18n`, checked; the
+  apps published in `site-dir` (all of them without one) and the projects
+  with their icons from `root`. {:site :languages :sites}: `sites` is the
+  site in each language's words, by :id."
+  [{:keys [config i18n site-dir root]}]
+  (let [site   (edn/read-string (slurp config))
         _      (when-let [problems (seq (check-site site))]
                  (fail! (str "site/site.edn isn't right:\n  " (str/join "\n  " problems))))
         languages (:languages site)
-        i18n   (get opts "--i18n" (str (fs/path (or (fs/parent config) ".") "i18n")))
+        i18n   (or i18n (str (fs/path (or (fs/parent config) ".") "i18n")))
         translations (read-translations languages i18n)
         _      (when-let [problems (seq (mapcat (fn [[id tr]] (translation-problems (words site) tr (str (fs/file i18n (str id ".edn")))))
                                                 translations))]
                  (fail! (str "A translation isn't right:\n  " (str/join "\n  " problems))))
-        dir    (get opts "--site-dir")
-        _      (when (and dir (not (fs/directory? dir))) (fail! dir "isn't a folder"))
-        projects (project-icons (get-in site [:open-source :projects]) (get opts "--root" "."))
-        apps   (vec (published-apps (:apps site) dir))
+        _      (when (and site-dir (not (fs/directory? site-dir))) (fail! site-dir "isn't a folder"))
+        projects (project-icons (get-in site [:open-source :projects]) (or root "."))
+        apps   (vec (published-apps (:apps site) site-dir))
         _      (when (empty? apps) (fail! "No app is published yet: nothing to list."))
-        listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects))
-        sites  (into {(:id (first languages)) listed}
-                     (for [[id tr] translations] [id (localize listed tr)]))
+        listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects))]
+    {:site listed
+     :languages languages
+     :sites (into {(:id (first languages)) listed}
+                  (for [[id tr] translations] [id (localize listed tr)]))}))
+
+(defn -main [& args]
+  (let [valued #{"--out" "--site-dir" "--config" "--root" "--i18n" "--fonts"}
+        opts   (loop [[a & more :as as] args, out {}]
+                 (cond (empty? as) out
+                       (valued a)  (if (seq more) (recur (rest more) (assoc out a (first more)))
+                                       (fail! a "needs a value"))
+                       :else       (fail! "bb portal [--site-dir DIR] [--out DIR] [--i18n DIR] [--fonts DIR], not" a)))
+        {:keys [site languages sites]}
+        (load-site {:config   (get opts "--config" "site/site.edn")
+                    :i18n     (get opts "--i18n")
+                    :site-dir (get opts "--site-dir")
+                    :root     (get opts "--root")})
+        fonts  (get opts "--fonts" "fonts")
         out    (get opts "--out" "_site")
         year   (str (java.time.Year/now))]
     (fs/create-dirs out)
-    (doseq [l languages
-            :let [page (fs/file out (folder languages l) "index.html")]]
-      (fs/create-dirs (fs/parent page))
-      (spit page (index-page (sites (:id l)) year languages l)))
-    (spit (fs/file out "404.html") (not-found-page sites year languages))
+    (doseq [[key {:keys [file body] :as page}] (pages sites year languages)
+            :let [f (fs/file out file)]]
+      (fs/create-dirs (fs/parent f))
+      (spit f (page-html languages page (read-fonts fonts key body))))
     (spit (fs/file out ".nojekyll") "")
     (println (str "Wrote " out "/: index.html, " (str/join ", " (for [l (rest languages)] (str (:id l) "/index.html")))
                   ", 404.html and .nojekyll, listing "
-                  (str/join ", " (concat (map :name projects) (map :name apps))) ", for " (:url site)))))
+                  (str/join ", " (concat (map :name (get-in site [:open-source :projects])) (map :name (:apps site))))
+                  ", for " (:url site)))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))
