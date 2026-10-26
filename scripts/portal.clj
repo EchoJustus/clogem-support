@@ -29,9 +29,13 @@
   in the open, through this repository's GitHub Discussions and issue
   forms (.github/). The apps come first (owner, 2026-10-05).
 
+  The English and Chinese pages set their text in Clogem Kai, subsets of
+  LXGW WenKai from fonts/ (bb fonts); Portuguese and Spanish keep the
+  sans (owner, 2026-10-26).
+
   Like the apps' pages: one self-contained file each, no JavaScript, nothing
   loaded from another site, and a Content-Security-Policy that allows only
-  the page's own style (by its SHA-256) and data: images. An app's icon is
+  the page's own style (by its SHA-256), data: images and data: fonts. An app's icon is
   taken from its published page (the data: URI of its favicon), so nothing
   is copied here from the apps' repositories; the open-source projects'
   icons are files in icons/, embedded as data: URIs."
@@ -146,7 +150,9 @@
                   (when-not (and (string? hreflang) (re-matches language-tag hreflang))
                     "its :hreflang must be a language tag, like pt")
                   (when-not (text? name)
-                    "it needs its :name, in its own language")]
+                    "it needs its :name, in its own language")
+                  (when-not (contains? #{nil true false} (:kai language))
+                    "its :kai must be true or false")]
          :when problem]
      (str "language " (pr-str (or id language)) ": " problem))))
 
@@ -405,9 +411,9 @@
   "\"Segoe UI Variable Display\",\"Segoe UI\",system-ui,-apple-system,BlinkMacSystemFont,Roboto")
 
 (def kai-family
-  "The text face: subsets of LXGW WenKai (or LXGW WenKai TC on the
-  Traditional Chinese page) made by bb fonts. The font's licence reserves
-  its names for unmodified fonts, so the subsets go by a name of our own."
+  "The text face of the English and Chinese pages: subsets of LXGW WenKai
+  made by bb fonts. The font's licence reserves its names for unmodified
+  fonts, so the subsets go by a name of our own."
   "Clogem Kai")
 
 (def ^:private text-stack
@@ -427,21 +433,30 @@
     (str "@font-face{font-family:\"" kai-family "\";src:url(data:font/woff2;base64," b64 ") format(\"woff2\");"
          "font-weight:" weight ";font-style:normal;font-display:swap}")))
 
+(defn- lang-selector
+  "Elements whose own language is one of `langs` (:lang tags), the root
+  aside."
+  [langs]
+  (str/join "," (for [l (sort langs)] (str "[lang=\"" l "\"]:not(html)"))))
+
 (defn css
   "The page's styles, one accent rule per app and project (inline style
   attributes would need the CSP to allow them), with the page's subsets of
-  Clogem Kai (`fonts`, from read-fonts).
+  Clogem Kai (`fonts`, from read-fonts; nil on a page in the sans).
 
   The theme follows the system, or the switcher in the header: three radio
   buttons, read by :has() on the root, so it takes no script. Without a
   script or a cookie the choice isn't remembered: each page opens on
   Auto.
 
-  The text is set in Clogem Kai (owner, 2026-10-26), but for headings and
-  heavy labels (weight 700: h1 to h3, .eyebrow, .chip, the store's name),
-  which keep the sans. Semibold labels (600 and 650: buttons, links, the
-  switcher, the language menu) take Kai's bold. page-text mirrors this."
-  [apps projects fonts]
+  On the English and Chinese pages the text is set in Clogem Kai (owner,
+  2026-10-26), but for headings and heavy labels (weight 700: h1 to h3,
+  .eyebrow, .chip, the store's name), which keep the sans. Semibold labels
+  (600 and 650: buttons, links, the switcher, the language menu) take
+  Kai's bold. Portuguese and Spanish keep the sans everywhere: their pages,
+  and their words on the others (`sans-langs`: the menu's names, the 404
+  page's lines). page-text mirrors this."
+  [apps projects fonts sans-langs]
   (str/join
    "\n"
    (concat
@@ -463,9 +478,9 @@
      (str "body{margin:0;min-height:100vh;color:var(--text);background:"
           "radial-gradient(1100px 560px at 8% -12%,var(--glow-1),transparent 62%),"
           "radial-gradient(900px 520px at 100% -4%,var(--glow-2),transparent 58%),var(--bg);"
-          "font:400 1.0625rem/1.7 " text-stack ";"
+          "font:400 1.0625rem/1.7 " (if fonts text-stack sans-stack) ";"
           "-webkit-font-smoothing:antialiased}")
-     (str "[lang]:not(html){font-family:" text-stack "}")
+     (str "[lang]:not(html){font-family:" (if fonts text-stack sans-stack) "}")
      ".page{max-width:62rem;margin:0 auto;padding:clamp(2.5rem,7vw,5.5rem) 1.25rem 2.5rem}"
      "a{color:var(--link);text-underline-offset:.18em}"
      "a:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:.45rem}"
@@ -595,7 +610,11 @@
     (for [{:keys [folder accent]} apps]
       (format ".app-%s::before{background:linear-gradient(90deg,%s,%s)}" folder (first accent) (second accent)))
     (for [{:keys [id accent]} projects]
-      (format ".project-%s::before{background:linear-gradient(90deg,%s,%s)}" id (first accent) (second accent))))))
+      (format ".project-%s::before{background:linear-gradient(90deg,%s,%s)}" id (first accent) (second accent)))
+    ;; Portuguese and Spanish words on a page in Kai: in the sans, after
+    ;; [lang]:not(html), which they would otherwise take
+    (when (and fonts (seq sans-langs))
+      [(str (lang-selector sans-langs) "{font-family:" sans-stack "}")]))))
 
 (defn csp
   "Nothing but the page's own style (by the SHA-256 of `style`), data:
@@ -833,16 +852,21 @@
 
 (defn pages
   "Every page the front page publishes, by key (a language's :id, or
-  \"404\"): what its <head> needs and its <body>. `sites` are site.edn in
-  each language's words, by :id."
+  \"404\"): what its <head> needs and its <body>, whether its text is in
+  Clogem Kai (:kai?, its language's :kai; the 404 page's is English's), and
+  the languages whose words stay in the sans wherever they appear
+  (:sans-langs, their :lang tags). `sites` are site.edn in each language's
+  words, by :id."
   [sites year languages]
   (let [english (first languages)
         site    (sites (:id english))
-        ui      (:ui site)]
+        ui      (:ui site)
+        sans    (set (map :lang (remove :kai languages)))]
     (into {"404" {:site site :lang english :current nil :file "404.html"
                   :title (str (:not-found-title ui) ": " (:title site))
                   :description (:not-found-description ui)
                   :apps (:apps site) :projects []
+                  :kai? (boolean (:kai english)) :sans-langs sans
                   :body (not-found-body sites year languages)}}
           (for [l languages
                 :let [s (sites (:id l))]]
@@ -850,12 +874,14 @@
                       :title (:title s)
                       :description (then (:lead s) (get-in s [:ui :description-tail]))
                       :apps (:apps s) :projects (get-in s [:open-source :projects])
+                      :kai? (boolean (:kai l)) :sans-langs sans
                       :body (index-body s year languages l)}]))))
 
 (defn page-html
-  "A page from `pages`, with its subsets of Clogem Kai (`fonts`)."
-  [languages {:keys [site lang current title description apps projects body]} fonts]
-  (let [style (css apps projects fonts)]
+  "A page from `pages`, with its subsets of Clogem Kai (`fonts`; nil on a
+  page in the sans)."
+  [languages {:keys [site lang current title description apps projects sans-langs body]} fonts]
+  (let [style (css apps projects fonts sans-langs)]
     (str
      "<!doctype html>\n"
      (h/html
@@ -884,19 +910,22 @@
     [(keyword tag) (set (map second (re-seq #"\.([A-Za-z0-9_-]+)" more)))]))
 
 (defn- weight-of
-  "The face an element's text is set in, as the stylesheet sets it: :heavy
-  (the sans), :bold or :regular (Clogem Kai's), else its parent's."
-  [tag classes attrs inherited]
-  (cond (or (#{:h1 :h2 :h3 :strong} tag) (some heavy-classes classes)) :heavy
+  "The face an element's text is set in, as the stylesheet sets it: :sans
+  (headings, heavy labels, and words in a language of `sans-langs`), :bold
+  or :regular (Clogem Kai's), else its parent's."
+  [sans-langs tag classes attrs inherited]
+  (cond (or (#{:h1 :h2 :h3 :strong} tag) (some heavy-classes classes)
+            (contains? sans-langs (:lang attrs))) :sans
+        (= :sans inherited) :sans
         (or (#{:summary :small} tag) (some semibold-classes classes)
             (and (= :a tag) (= "page" (:aria-current attrs)))) :bold
         :else inherited))
 
 (defn page-text
   "The text of a page's hiccup `body`, by the face it is set in: :regular
-  and :bold (Clogem Kai's, which bb fonts subsets) and :heavy (the sans).
-  Markup that isn't text (raw SVG, attributes) is left out."
-  [body]
+  and :bold (Clogem Kai's, which bb fonts subsets) and :sans. Markup that
+  isn't text (raw SVG, attributes) is left out."
+  [{:keys [body sans-langs]}]
   (letfn [(walk [acc node w]
             (cond (string? node) (update acc w str node)
                   (vector? node) (let [[t & more] node
@@ -904,34 +933,37 @@
                                        kids  (if attrs (rest more) more)
                                        [tag classes] (tag-parts t)
                                        classes (into classes (some-> (:class attrs) (str/split #"\s+")))]
-                                   (reduce #(walk %1 %2 (weight-of tag classes attrs w)) acc kids))
+                                   (reduce #(walk %1 %2 (weight-of (set sans-langs) tag classes attrs w)) acc kids))
                   (seq? node) (reduce #(walk %1 %2 w) acc node)
                   :else acc))]
-    (walk {:regular "" :bold "" :heavy ""} body :regular)))
+    (walk {:regular "" :bold "" :sans ""} body :regular)))
 
 (defn needed
-  "The characters a page sets in Clogem Kai, by face: {:regular #{} :bold #{}}."
-  [body]
-  (let [text (page-text body)
-        chars (fn [s] (into (sorted-set) (remove #(Character/isWhitespace (int %))) s))]
+  "The characters a page from `pages` sets in Clogem Kai, by face:
+  {:regular #{} :bold #{}}, empty on a page in the sans."
+  [page]
+  (let [text  (page-text page)
+        chars (fn [s] (if (:kai? page) (into (sorted-set) (remove #(Character/isWhitespace (int %))) s) (sorted-set)))]
     {:regular (chars (:regular text)) :bold (chars (:bold text))}))
 
 (defn read-fonts
-  "A page's subsets of Clogem Kai from `dir` (bb fonts makes them), as
-  base64: {:regular .. :bold ..}. Warns when the page sets a character its
-  subset lacks (it then falls back to the sans), as after an edit to the
-  words without bb fonts; bb test fails on it."
-  [dir key body]
-  (let [file (fn [w] (fs/file dir (str key "-" w ".woff2")))
-        b64  (fn [f] (.encodeToString (Base64/getEncoder) ^bytes (fs/read-all-bytes f)))
-        made (some-> (fs/file dir "subsets.edn") (#(when (fs/exists? %) (edn/read-string (slurp %)))) :pages (get key))]
-    (when-not (every? fs/exists? [(file "regular") (file "bold")])
-      (fail! (str "Clogem Kai's subsets for " key " aren't in " dir ": run bb fonts (README, \"Typography\")")))
-    (doseq [[w chars] (needed body)
-            :let [lacking (remove (set (get made w "")) chars)]
-            :when (seq lacking)]
-      (warn! key "sets characters its" (name w) "subset lacks (run bb fonts):" (apply str lacking)))
-    {:regular (b64 (file "regular")) :bold (b64 (file "bold"))}))
+  "The subsets of Clogem Kai of the page `page` (from `pages`, by `key`)
+  from `dir` (bb fonts makes them), as base64: {:regular .. :bold ..}; nil
+  for a page in the sans. Warns when the page sets a character its subset
+  lacks (it then falls back to the sans), as after an edit to the words
+  without bb fonts; bb test fails on it."
+  [dir key page]
+  (when (:kai? page)
+    (let [file (fn [w] (fs/file dir (str key "-" w ".woff2")))
+          b64  (fn [f] (.encodeToString (Base64/getEncoder) ^bytes (fs/read-all-bytes f)))
+          made (some-> (fs/file dir "subsets.edn") (#(when (fs/exists? %) (edn/read-string (slurp %)))) :pages (get key))]
+      (when-not (every? fs/exists? [(file "regular") (file "bold")])
+        (fail! (str "Clogem Kai's subsets for " key " aren't in " dir ": run bb fonts (README, \"Typography\")")))
+      (doseq [[w chars] (needed page)
+              :let [lacking (remove (set (get made w "")) chars)]
+              :when (seq lacking)]
+        (warn! key "sets characters its" (name w) "subset lacks (run bb fonts):" (apply str lacking)))
+      {:regular (b64 (file "regular")) :bold (b64 (file "bold"))})))
 
 ;; ---------------------------------------------------------------------------
 ;; The site in its languages
@@ -986,10 +1018,10 @@
         out    (get opts "--out" "_site")
         year   (str (java.time.Year/now))]
     (fs/create-dirs out)
-    (doseq [[key {:keys [file body] :as page}] (pages sites year languages)
+    (doseq [[key {:keys [file] :as page}] (pages sites year languages)
             :let [f (fs/file out file)]]
       (fs/create-dirs (fs/parent f))
-      (spit f (page-html languages page (read-fonts fonts key body))))
+      (spit f (page-html languages page (read-fonts fonts key page))))
     (spit (fs/file out ".nojekyll") "")
     (println (str "Wrote " out "/: index.html, " (str/join ", " (for [l (rest languages)] (str (:id l) "/index.html")))
                   ", 404.html and .nojekyll, listing "
