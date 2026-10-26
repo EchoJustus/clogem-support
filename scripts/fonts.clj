@@ -1,24 +1,25 @@
 ;; Copyright 2026 EchoJustus. Part of clogem-support.
 ;; SPDX-License-Identifier: MIT
 (ns fonts
-  "Clogem Kai, the text face of the front page (owner, 2026-10-26): for each
-  page, the glyphs of LXGW WenKai it sets, in two weights, as WOFF2 in
-  fonts/ for bb portal to embed (the pages load nothing from other sites).
+  "Clogem Kai, the text face of the front page's English and Chinese pages
+  (owner, 2026-10-26): for each such page, the glyphs of LXGW WenKai it
+  sets, in two weights, as WOFF2 in fonts/ for bb portal to embed (the
+  pages load nothing from other sites). Portuguese and Spanish keep the
+  sans, so they have none.
 
-    bb fonts                  every page's subsets, and fonts/subsets.edn
+    bb fonts                  every Kai page's subsets, and fonts/subsets.edn
     bb fonts --main DIR       LXGW WenKai from DIR (default: where Ubuntu's
                               fonts-lxgw-wenkai package puts it)
 
-  The Traditional Chinese page takes LXGW WenKai TC, in Taiwan's character
-  forms; the others LXGW WenKai. Each source is pinned by its SHA-256:
-  WenKai from Ubuntu's package (apt install fonts-lxgw-wenkai), WenKai TC
-  fetched (with curl) from its Google Fonts build on npm into target/fonts/.
+  Traditional Chinese takes LXGW WenKai too (owner, 2026-10-26). The
+  source is pinned by its SHA-256: Ubuntu's package (apt install
+  fonts-lxgw-wenkai).
 
   Each subset holds the characters its page sets in that weight
   (portal/needed, from the page's own text) and printable ASCII, so a small
   edit in Latin letters still finds its glyphs. bb test fails when a page
   sets a character its subset lacks: run this again then. The subsets
-  carry the fonts' copyright and licence but not their names, which the
+  carry the font's copyright and licence but not its names, which the
   licence reserves for unmodified fonts (SIL Open Font License 1.1,
   Reserved Font Names \"LXGW\" and \"霞鹜\"): they are named Clogem Kai,
   and the pages call them that.
@@ -29,37 +30,20 @@
             [babashka.process :as p]
             [clojure.pprint :as pprint]
             [clojure.string :as str]
-            [portal])
-  (:import (java.security MessageDigest)))
+            [portal]))
 
 (set! *warn-on-reflection* true)
 
-(def sources
-  "The fonts the subsets are cut from, each pinned by its SHA-256."
-  {:main {:name    "LXGW WenKai"
-          :version "1.315"
-          :from    "Ubuntu's package fonts-lxgw-wenkai 1.315+repack-1 (noble), rebuilt from lxgw/LxgwWenKai's source"
-          :licence "SIL Open Font License 1.1, Reserved Font Names \"LXGW\" and \"霞鹜\""
-          :files   {:regular {:file "LXGWWenKai-Regular.ttf"
-                              :sha256 "6cbc11b78b741b661930569c92d03e7926c29b66af7a10da1af355baa2acef9c"}
-                    :bold    {:file "LXGWWenKai-Bold.ttf"
-                              :sha256 "a2692a0c0dac9c954a17789ec3509c6ff0c42a007d43438e5a9816782b1a45f5"}}}
-   :tc   {:name    "LXGW WenKai TC"
-          :version "1.330"
-          :from    "Google Fonts' build of lxgw/LxgwWenkaiTC, as npm @expo-google-fonts/lxgw-wenkai-tc 0.4.3"
-          :licence "SIL Open Font License 1.1"
-          :files   {:regular {:file "LXGWWenKaiTC_400Regular.ttf"
-                              :url "https://cdn.jsdelivr.net/npm/@expo-google-fonts/lxgw-wenkai-tc@0.4.3/400Regular/LXGWWenKaiTC_400Regular.ttf"
-                              :sha256 "4e1da195be9a243a1f49679c4c98332ca8b0e5ce6229e143df42b2bc3268af17"}
-                    :bold    {:file "LXGWWenKaiTC_700Bold.ttf"
-                              :url "https://cdn.jsdelivr.net/npm/@expo-google-fonts/lxgw-wenkai-tc@0.4.3/700Bold/LXGWWenKaiTC_700Bold.ttf"
-                              :sha256 "5abc12ecb4252a81b9ddf19b4c8a303cd9fe01695d6d1681628e5a3662639220"}}}})
-
-(defn source-of
-  "Which font a page's subsets are cut from: Taiwan's forms for Traditional
-  Chinese, LXGW WenKai for the rest."
-  [key]
-  (if (= key "zh-hant") :tc :main))
+(def source
+  "The font the subsets are cut from, each weight pinned by its SHA-256."
+  {:name    "LXGW WenKai"
+   :version "1.315"
+   :from    "Ubuntu's package fonts-lxgw-wenkai 1.315+repack-1 (noble), rebuilt from lxgw/LxgwWenKai's source"
+   :licence "SIL Open Font License 1.1, Reserved Font Names \"LXGW\" and \"霞鹜\""
+   :files   {:regular {:file "LXGWWenKai-Regular.ttf"
+                       :sha256 "6cbc11b78b741b661930569c92d03e7926c29b66af7a10da1af355baa2acef9c"}
+             :bold    {:file "LXGWWenKai-Bold.ttf"
+                       :sha256 "a2692a0c0dac9c954a17789ec3509c6ff0c42a007d43438e5a9816782b1a45f5"}}})
 
 (def ^:private ascii
   "Printable ASCII, in every subset."
@@ -68,25 +52,18 @@
 (defn- fail! [& msg] (binding [*out* *err*] (println (str/join " " msg))) (System/exit 1))
 
 (defn- digest-of [f]
-  (let [d (.digest (MessageDigest/getInstance "SHA-256") ^bytes (fs/read-all-bytes f))]
+  (let [d (.digest (java.security.MessageDigest/getInstance "SHA-256") ^bytes (fs/read-all-bytes f))]
     (apply str (map #(format "%02x" (bit-and % 0xff)) d))))
 
 (defn- source-file
-  "A source font, checked against its pin: from `main-dir` for LXGW WenKai,
-  fetched into target/fonts/ for WenKai TC."
-  [font weight main-dir]
-  (let [{:keys [file url] :as pin} (get-in sources [font :files weight])
-        f (if url (fs/file "target" "fonts" file) (fs/file main-dir file))]
-    (when (and url (not (fs/exists? f)))
-      (fs/create-dirs (fs/parent f))
-      (println "Fetching" url)
-      (let [r (p/shell {:continue true} "curl" "-fsSL" "--retry" "3" "-o" (str f) url)]
-        (when-not (zero? (:exit r)) (fs/delete-if-exists f) (fail! "Couldn't fetch" url))))
+  "A weight of LXGW WenKai from `main-dir`, checked against its pin."
+  [weight main-dir]
+  (let [{:keys [file sha256]} (get-in source [:files weight])
+        f (fs/file main-dir file)]
     (when-not (fs/exists? f)
       (fail! (str f " isn't there: apt install fonts-lxgw-wenkai, or --main DIR")))
-    (when-not (= (:sha256 pin) (digest-of f))
-      (fail! (str f " isn't the pinned " (get-in sources [font :name]) " " (get-in sources [font :version])
-                  " (SHA-256 " (digest-of f) ")")))
+    (when-not (= sha256 (digest-of f))
+      (fail! (str f " isn't the pinned " (:name source) " " (:version source) " (SHA-256 " (digest-of f) ")")))
     (str f)))
 
 (defn- sh! [& cmd]
@@ -118,7 +95,7 @@
         named (str (fs/file dir "named.ttf"))]
     (spit chars (str ascii text))
     (sh! "pyftsubset" src (str "--text-file=" chars) (str "--output-file=" sub)
-          "--no-hinting" "--desubroutinize" "--name-IDs=0,13,14" "--drop-tables+=meta,DSIG")
+         "--no-hinting" "--desubroutinize" "--name-IDs=0,13,14" "--drop-tables+=meta,DSIG")
     (sh! "ttx" "-q" "-t" "name" "-o" names sub)
     (spit names (str/replace-first (slurp names) "</name>" (str (own-names weight) "  </name>")))
     (sh! "ttx" "-q" "-m" sub "-o" named names)
@@ -132,33 +109,32 @@
         out      (get opts "--out" "fonts")
         {:keys [languages sites]} (portal/load-site {:config "site/site.edn"})
         year     (str (java.time.Year/now))
-        pages    (portal/pages sites year languages)]
+        pages    (filter (comp :kai? val) (portal/pages sites year languages))]
     (doseq [exe ["pyftsubset" "ttx" "fonttools"]
             :when (not-any? #(fs/executable? (fs/file % exe)) (fs/exec-paths))]
       (fail! exe "isn't on PATH: pip install fonttools brotli"))
     (fs/create-dirs out)
+    ;; a page no longer in Kai keeps no subsets
+    (doseq [f (fs/glob out "*.woff2")] (fs/delete f))
     (let [made (into (sorted-map)
-                     (for [[key {:keys [body]}] pages
-                           :let [font (source-of key)
-                                 need (portal/needed body)]]
+                     (for [[key page] pages
+                           :let [need (portal/needed page)]]
                        (do (doseq [w [:regular :bold]]
-                             (subset! (source-file font w main-dir) (apply str (need w)) w
+                             (subset! (source-file w main-dir) (apply str (need w)) w
                                       (str (fs/file out (str key "-" (name w) ".woff2")))))
-                           (println (format "%-8s %s: %d regular and %d bold characters, %,d and %,d bytes"
-                                            key (get-in sources [font :name]) (count (need :regular)) (count (need :bold))
+                           (println (format "%-8s %d regular and %d bold characters, %,d and %,d bytes"
+                                            key (count (need :regular)) (count (need :bold))
                                             (fs/size (fs/file out (str key "-regular.woff2")))
                                             (fs/size (fs/file out (str key "-bold.woff2")))))
-                           [key {:font    font
-                                 :regular (apply str (sort (set (str ascii (apply str (need :regular))))))
+                           [key {:regular (apply str (sort (set (str ascii (apply str (need :regular))))))
                                  :bold    (apply str (sort (set (str ascii (apply str (need :bold))))))}])))]
       (spit (fs/file out "subsets.edn")
             (str ";; Made by bb fonts (scripts/fonts.clj): don't edit. What each page's\n"
-                 ";; subsets of Clogem Kai hold, by page and weight, and the fonts they\n"
+                 ";; subsets of Clogem Kai hold, by page and weight, and the font they\n"
                  ";; were cut from (fonts/README.md).\n"
                  (with-out-str
-                   (pprint/pprint {:sources (into {} (for [[k v] sources]
-                                                       [k (-> (select-keys v [:name :version :from :licence])
-                                                              (assoc :sha256 (into {} (for [[w f] (:files v)] [w (:sha256 f)]))))]))
+                   (pprint/pprint {:source (-> (select-keys source [:name :version :from :licence])
+                                               (assoc :sha256 (into {} (for [[w f] (:files source)] [w (:sha256 f)]))))
                                    :pages made}))))
       (println (str "Wrote " out "/: " (count made) " pages' subsets and subsets.edn")))))
 

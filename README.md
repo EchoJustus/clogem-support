@@ -71,7 +71,8 @@ Each section opens with its heading alone, with no overline repeating it
 - `site/i18n/<language>.edn`: the same words in each other language.
 - `icons/`: the open-source projects' icons, copied from the clogem icon
   set (`icons/README.md` says from where, and under which licence).
-- `fonts/`: each page's subsets of its text face (below, "Typography").
+- `fonts/`: the English and Chinese pages' subsets of their text face
+  (below, "Typography").
 - `scripts/portal.clj`: the generator, Babashka with the hiccup that ships
   inside it. It lists the apps whose folders are on `gh-pages`, each with
   the icon from its own page (its favicon, a `data:` SVG). An app without
@@ -95,7 +96,7 @@ Each section opens with its heading alone, with no overline repeating it
 ```
 bb portal --site-dir pages   # _site/ from a checkout of gh-pages in pages/
 bb test                      # the pages' rules, and the workflow's publishing step against a local stand-in for gh-pages
-bb fonts                     # each page's subsets of Clogem Kai, after a change to the words (below, "Typography")
+bb fonts                     # the English and Chinese pages' subsets of Clogem Kai, after a change to the words (below, "Typography")
 ```
 
 Open `_site/index.html` in a browser to look at it.
@@ -116,10 +117,10 @@ Open `_site/index.html` in a browser to look at it.
 
 ### Typography
 
-The text is set in **Clogem Kai** (owner, 2026-10-26): subsets of
-[LXGW WenKai](https://github.com/lxgw/LxgwWenKai) (霞鹜文楷), an open
-kaishu typeface whose Latin letters come from Fontworks' Klee, so
-English, Portuguese and Spanish are written in the same hand as Chinese.
+The English and Chinese pages set their text in **Clogem Kai** (owner,
+2026-10-26): subsets of [LXGW WenKai](https://github.com/lxgw/LxgwWenKai)
+(霞鹜文楷), an open kaishu typeface whose Latin letters come from
+Fontworks' Klee, so English is written in the same hand as Chinese.
 
 - **What it sets:** everything but the headings: the leads, the cards'
   words, the notes, the links and buttons, the theme switcher and the
@@ -130,27 +131,31 @@ English, Portuguese and Spanish are written in the same hand as Chinese.
   thick brush; the system's sans (Segoe UI, San Francisco, Roboto, and
   for Chinese Microsoft YaHei or JhengHei, PingFang) carries the page's
   structure, and Kai its voice.
+- **Portuguese and Spanish keep the sans** throughout (owner, 2026-10-26:
+  in Kai, the owner saw characters falling back and accents not
+  displayed properly), and so do their words on the other pages: the
+  language menu's *Português* and *Español*, and the 404 page's lines.
+  `site.edn`'s `:languages` marks the Kai languages with `:kai`.
+- **Traditional Chinese** takes LXGW WenKai too (owner, 2026-10-26), which
+  has a glyph for every character the page sets (`bb test` checks).
 - **Two weights:** regular for the text, and bold for the semibold labels
   (links, buttons, the switcher, the menu), which the browser takes as the
   nearest face.
-- **Traditional Chinese** takes [LXGW WenKai TC](https://github.com/lxgw/LxgwWenkaiTC),
-  whose characters follow Taiwan's Ministry of Education standard forms,
-  the ones its readers expect; every other page takes LXGW WenKai.
-- **Each page embeds its own two subsets** as WOFF2 `data:` URIs, so it
+- **Each Kai page embeds its own two subsets** as WOFF2 `data:` URIs, so it
   still loads nothing from elsewhere: the characters it sets in each
-  weight, and printable ASCII. The full fonts are 13 to 19 MB each; the
-  subsets, about 24 KB (English, Portuguese, Spanish), 89 KB (Simplified
-  Chinese) and 120 KB (Traditional Chinese), a third more in base64. The
-  pages grew from 69 KB to about 101 KB, 189 KB and 230 KB, and the 404
-  page from 19 KB to 56 KB. A browser shows the text at once and swaps
-  the face in (`font-display: swap`).
+  weight, and printable ASCII. The full font is about 19 MB a weight; the
+  subsets, 23 KB (English), 89 KB (Simplified Chinese) and 104 KB
+  (Traditional Chinese), a third more in base64. Those pages grew from
+  69 KB to 101 KB, 189 KB and 208 KB, and the 404 page from 19 KB to
+  55 KB; the Portuguese and Spanish ones stay at 70 KB. A browser shows
+  the text at once and swaps the face in (`font-display: swap`).
 - **After a change to the words,** `bb test` fails if a page sets a
   character its subset lacks (the page would still work, with that
   character in the sans): run `bb fonts`, which needs fonttools and
   LXGW WenKai (`fonts/README.md`).
 - **The licence:** the SIL Open Font License 1.1, which reserves the names
-  "LXGW" and "霞鹜" for the unmodified fonts, so the subsets are renamed
-  Clogem Kai and keep the fonts' copyright and licence (below,
+  "LXGW" and "霞鹜" for the unmodified font, so the subsets are renamed
+  Clogem Kai and keep the font's copyright and licence (below,
   "License").
 
 ### Languages
@@ -188,9 +193,14 @@ default:
   in Chinese fonts: Microsoft YaHei or PingFang SC for Simplified,
   Microsoft JhengHei or PingFang TC for Traditional, after the Latin face,
   so a system never falls back to Japanese forms.
-- **The apps' pages are in English.** From another language, their links
-  say so ("（英文）", "(em inglês)") and carry `hreflang="en"`. GitHub's
-  forms are in English too, and each translation says so.
+- **An app's page in the reader's language** is linked when its folder has
+  one: a subfolder of the language's name with an `index.html`
+  (`wmark-pro/zh-hant/`; Wmark Pro's page is in these five languages
+  since 2026-10-26). Otherwise the card links to the app's English page
+  and says so ("（英文）", "(em inglês)"), with `hreflang="en"`. The
+  front page finds out on each build, which runs after every Pages build,
+  so an app's new language is linked on its own. GitHub's forms are in
+  English, and each translation says so.
 - **The 404 page** is one page for the whole site, in English, with a line
   in each other language leading to its front page.
 - **No native speaker has checked the translations yet.** When one has,
@@ -212,9 +222,9 @@ translation file, a line in `:languages`, and its folder in `OWNED`.
 
 **Adding a language:** a line in `site.edn`'s `:languages` (its folder
 name, its `lang` tag with its variety, who it is for, and its name in its
-own words), its translation in `site/i18n/`, its folder in `OWNED`
-in `portal.yml`, and its subsets (`bb fonts`); `bb test` fails until all
-four agree. An app can never
+own words), its translation in `site/i18n/`, and its folder in `OWNED` in
+`portal.yml`; `bb test` fails until all three agree. A language in Clogem
+Kai (`:kai true`) also needs its subsets (`bb fonts`). An app can never
 take a language's folder name.
 
 ### Feedback
@@ -294,12 +304,11 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
   and the fonts in `trailers/*/sources/fonts/` are under the
   SIL Open Font License 1.1
   (each trailer's README credits them).
-- **The fonts in `fonts/`** are subsets of LXGW WenKai and LXGW WenKai TC,
-  under the SIL Open Font License 1.1 (`fonts/OFL-LXGW-WenKai.txt`,
-  `fonts/OFL-LXGW-WenKai-TC.txt`, with their copyright), renamed Clogem
-  Kai because the licence reserves the names "LXGW" and "霞鹜" for the
-  unmodified fonts; the pages embed them, which the licence allows, and
-  it doesn't cover the pages (`fonts/README.md`).
+- **The fonts in `fonts/`** are subsets of LXGW WenKai, under the SIL
+  Open Font License 1.1 (`fonts/OFL-LXGW-WenKai.txt`, with its
+  copyright), renamed Clogem Kai because the licence reserves the names
+  "LXGW" and "霞鹜" for the unmodified font; the pages embed them, which
+  the licence allows, and it doesn't cover the pages (`fonts/README.md`).
 - **Everything else:** © 2026 EchoJustus, all rights reserved. That covers
   the words in `site/`, every page on the `gh-pages` branch (including the
   apps' support pages and privacy policies), the trailers in `trailers/`
