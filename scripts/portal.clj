@@ -733,9 +733,15 @@
      [:p.lead (:lead site)]
      jump]))
 
+(def copyright-holder
+  "The publisher in every footer's copyright notice, in full, never
+  shortened or split (CLAUDE.md, \"Footer copyright notices\", owner,
+  2026-10-26). The hub's footer names the publisher alone."
+  "EchoJustus (Jiapeng Ji)")
+
 (defn- footer [ui year]
   [:footer
-   [:p (str "© " year " EchoJustus.")]
+   [:p (str "© " year " " copyright-holder ".")]
    [:p (:footer-privacy ui)]])
 
 (defn- mailto [email subject]
