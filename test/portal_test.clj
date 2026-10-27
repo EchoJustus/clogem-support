@@ -132,6 +132,62 @@
     (testing ".nojekyll: Pages serves the files as they are"
       (is (= "" nojekyll)))))
 
+(deftest the-hub-wears-its-own-mark
+  ;; the Clogem Support mark (owner, 2026-10-27), from icons/ (icons/README.md)
+  (let [drawing (fn [f] (str/trim (str/replace (slurp f) #"(?s)<!--.*?-->" "")))
+        header  (drawing "icons/clogem-support.svg")
+        favicon (drawing "icons/clogem-support-favicon.svg")
+        uri     (str "data:image/svg+xml;base64,"
+                     (.encodeToString (Base64/getEncoder) (.getBytes ^String favicon StandardCharsets/UTF_8)))]
+    (testing "both drawings are shapes alone, fit to draw inline: nothing that runs, styles or reaches outside them"
+      (is (nil? (portal/inline-svg-problem header)))
+      (is (nil? (portal/inline-svg-problem favicon))))
+    (testing "what an inline mark may not hold, though a data: icon could"
+      (doseq [[what svg] {"a style element"   "<svg><style>path{fill:red}</style></svg>"
+                          "a style attribute" "<svg><path style=\"fill:red\"/></svg>"
+                          "a link"            "<svg><a href=\"#x\"><path/></a></svg>"
+                          "an animation"      "<svg><path><set attributeName=\"d\" to=\"M0 0\"/></path></svg>"
+                          "a meta element"    "<svg><meta http-equiv=\"refresh\" content=\"0\"/></svg>"
+                          "a script"          "<svg><script>alert(1)</script></svg>"}]
+        (is (some? (portal/inline-svg-problem svg)) what))
+      (is (nil? (portal/inline-svg-problem "<svg><defs><linearGradient id=\"g\"><stop/></linearGradient><clipPath id=\"c\"><path/></clipPath></defs><g clip-path=\"url(#c)\"><path fill=\"url(#g)\"/><ellipse/></g></svg>"))))
+    (testing "every page shows the mark in its header and as its favicon, in place of the old four tiles"
+      (let [pages (temp-dir)
+            _     (app-page! pages "wmark-pro" wmark-pro-head)
+            {:keys [exit said pages not-found]} (portal! pages)]
+        (is (zero? exit) said)
+        (doseq [[n html] (assoc pages "404.html" not-found)]
+          (testing n
+            (is (str/includes? html (str "<span aria-hidden=\"true\" class=\"mark\">" header "</span>")))
+            (is (str/includes? html (str "<link href=\"" uri "\" rel=\"icon\" type=\"image/svg+xml\">")))
+            (is (not (str/includes? html "rx=\"6\" fill=\"#4F80E3\"")) "the old tiles are gone")
+            (is (not (str/includes? html "<!--")) "the licence comment stays in the file")
+            (let [ids (map second (re-seq #"\sid=\"([^\"]+)\"" html))]
+              (is (= (count ids) (count (set ids))) "the mark's ids clash with nothing on the page"))))))
+    (testing "an unfit mark stops the build, checked as the page will carry it"
+      (doseq [[what bad reason] [["a script" "<script>alert(1)</script></svg>" "it has a script"]
+                               ["a script split by a comment" "<scr<!---->ipt>alert(1)</scr<!---->ipt></svg>" "it has a script"]
+                               ["a style element" "<style>path{fill:red}</style></svg>" "it has a style element"]]]
+        (testing what
+          (let [root  (temp-dir)
+                pages (temp-dir)
+                _     (app-page! pages "wmark-pro" wmark-pro-head)
+                f     (fs/file root "icons" "clogem-support.svg")]
+            (fs/copy-tree "icons" (fs/path root "icons"))
+            (spit f (str/replace (slurp f) "</svg>" bad))
+            (let [{:keys [exit said]} (portal! pages "--root" root)]
+              (is (= 1 exit))
+              (is (str/includes? said (str "the hub's mark icons/clogem-support.svg: " reason)) said))))))
+    (testing "a missing mark stops the build"
+      (let [root  (temp-dir)
+            pages (temp-dir)
+            _     (app-page! pages "wmark-pro" wmark-pro-head)]
+        (fs/copy-tree "icons" (fs/path root "icons"))
+        (fs/delete (fs/path root "icons" "clogem-support-favicon.svg"))
+        (let [{:keys [exit said]} (portal! pages "--root" root)]
+          (is (= 1 exit))
+          (is (str/includes? said "the hub's mark icons/clogem-support-favicon.svg isn't there") said))))))
+
 (deftest the-pages-run-nothing-and-load-nothing-from-elsewhere
   (let [pages (temp-dir)
         _     (app-page! pages "wmark-pro" wmark-pro-head)
@@ -144,6 +200,7 @@
         (is (every? #(str/starts-with? % "data:") (map second (re-seq #"\ssrc=\"([^\"]*)\"" html)))
             "images are data: URIs")
         (is (not (re-find #"<link [^>]*rel=\"stylesheet\"" html)))
+        (is (= 1 (count (re-seq #"<style\b" html))) "one style element, the one the CSP allows by its hash")
         (let [style (second (re-find #"(?s)<style>(.*?)</style>" html))]
           (is (some? style))
           (is (str/includes? html "http-equiv=\"Content-Security-Policy\""))
@@ -785,7 +842,11 @@
     (is (str/includes? (slurp "icons/clogem-wmark.svg") "SPDX-License-Identifier: EPL-2.0"))
     (let [readme (slurp "icons/README.md")]
       (is (re-find #"`clogem-press\.png`[^\n]*EPL-2\.0" readme) "a PNG carries no header: the README states its licence")
-      (is (re-find #"`clogem-hstry\.png`[^\n]*all rights reserved" readme)))
+      (is (re-find #"`clogem-hstry\.png`[^\n]*all rights reserved" readme))
+      (testing "the hub's own mark: all rights reserved, in its first line and in the README"
+        (doseq [f ["icons/clogem-support.svg" "icons/clogem-support-favicon.svg"]]
+          (is (str/starts-with? (slurp f) "<!-- Copyright 2026 EchoJustus. All rights reserved. Part of clogem-support. -->") f)
+          (is (re-find (re-pattern (str "`" (str/replace (str (fs/file-name f)) "." "\\.") "`[^\\n]*all rights reserved")) readme) f))))
     (is (str/starts-with? (slurp "icons/EPL-2.0.txt") "Eclipse Public License - v 2.0"))
     (is (str/starts-with? (slurp "icons/README.md") "<!-- Copyright 2026 EchoJustus. All rights reserved.")))
   (testing "the words: all rights reserved, outside the MIT license"
