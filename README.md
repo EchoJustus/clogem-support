@@ -73,8 +73,10 @@ Each section opens with its heading alone, with no overline repeating it
 - `site/site.edn`: its words in English, the projects and apps it lists,
   in order, the store links, the feedback channels and the languages.
 - `site/i18n/<language>.edn`: the same words in each other language.
-- `icons/`: the open-source projects' icons, copied from the clogem icon
-  set (`icons/README.md` says from where, and under which licence).
+- `icons/`: the open-source projects' icons and the hub's own mark (the
+  Clogem Support mark, in the header and as the favicon), copied from the
+  clogem icon set (`icons/README.md` says from where, and under which
+  licence).
 - `fonts/`: the English and Chinese pages' subsets of their text face
   (below, "Typography").
 - `scripts/portal.clj`: the generator, Babashka with the hiccup that ships
@@ -151,8 +153,11 @@ Fontworks' Klee, so English is written in the same hand as Chinese.
   subsets, 23 KB (English), 89 KB (Simplified Chinese) and 104 KB
   (Traditional Chinese), a third more in base64. Those pages grew from
   69 KB to 101 KB, 189 KB and 208 KB, and the 404 page from 19 KB to
-  55 KB; the Portuguese and Spanish ones stay at 70 KB. A browser shows
-  the text at once and swaps the face in (`font-display: swap`).
+  55 KB; the Portuguese and Spanish ones stay at 70 KB. The hub's own
+  mark (`icons/README.md`) adds 6.3 KB to every page, so they are now
+  107 KB, 195 KB and 215 KB, the 404 page 62 KB, and the Portuguese and
+  Spanish ones 76 KB. A browser shows the text at once and swaps the face
+  in (`font-display: swap`).
 - **After a change to the words,** `bb test` fails if a page sets a
   character its subset lacks (the page would still work, with that
   character in the sans): run `bb fonts`, which needs fonttools and
@@ -317,6 +322,7 @@ clojure -M:record --display :99 --shots trailers/wmark-pro/recording.edn --out t
   the words in `site/`, every page on the `gh-pages` branch (including the
   apps' support pages and privacy policies), the trailers in `trailers/`
   (videos, captions, words, recordings), and the names, logos and icons
-  of Clogem and its apps (the drawings in `icons/` under their projects'
-  licences, above). The MIT license doesn't cover any of it, and no
-  licence here grants a right to use the names or icons as marks.
+  of Clogem and its apps, the hub's own mark in `icons/` included (the
+  projects' drawings in `icons/` under their projects' licences, above).
+  The MIT license doesn't cover any of it, and no licence here grants a
+  right to use the names or icons as marks.

@@ -324,14 +324,6 @@
   clogem-press's jade, clogem-hstry's amber."
   ["#4F80E3" "#7C62E2" "#23A982" "#E5A23A"])
 
-(defn- hub-mark
-  "The hub's own mark: the family's four colours as four rounded tiles."
-  []
-  (let [[a b c d] family
-        tile (fn [x y fill] (format "<rect x=\"%d\" y=\"%d\" width=\"20\" height=\"20\" rx=\"6\" fill=\"%s\"/>" x y fill))]
-    (str "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 48 48\">"
-         (tile 3 3 a) (tile 25 3 b) (tile 3 25 c) (tile 25 25 d) "</svg>")))
-
 (defn- data-uri [svg]
   (str "data:image/svg+xml;base64,"
        (.encodeToString (Base64/getEncoder) (.getBytes ^String svg StandardCharsets/UTF_8))))
@@ -376,6 +368,43 @@
              (let [svg (slurp f)]
                (some-> (icon-problem svg) bad!)
                (assoc project :icon-uri (data-uri svg))))))))
+
+(def ^:private drawing-elements
+  "What an SVG drawn inline in the page may be made of: shapes, groups,
+  gradients and clip paths, and nothing that styles, links, animates or
+  embeds (the page's CSP would block a <style>, and nothing else belongs in
+  a mark)."
+  #{"svg" "defs" "g" "path" "rect" "circle" "ellipse" "line" "polyline" "polygon"
+    "linearGradient" "radialGradient" "stop" "clipPath"})
+
+(defn inline-svg-problem
+  "Why an SVG can't be drawn inline in the page, or nil: it must pass
+  icon-problem, be made of drawing-elements alone, and set no style
+  attribute."
+  [svg]
+  (or (icon-problem svg)
+      (when-let [other (seq (remove drawing-elements (map second (re-seq #"<([A-Za-z][\w:.-]*)" svg))))]
+        (str "it has a " (str/join ", " (distinct other)) " element, and an inline mark is shapes alone"))
+      (when (re-find #"(?i)\sstyle\s*=" svg) "it has a style attribute")))
+
+(def ^:private hub-mark-files
+  "The hub's own mark, the Clogem Support mark from the clogem icon family
+  (icons/README.md): the drawing the header shows, and the favicon's own
+  drawing, made to stay sharp at 16 and 32 pixels."
+  {:header "icons/clogem-support.svg" :favicon "icons/clogem-support-favicon.svg"})
+
+(defn- hub-mark
+  "The hub's own mark read from `root` (this repository), by role (:header,
+  :favicon): each without its licence comment, as the page carries it, and
+  checked as such to be shapes alone (inline-svg-problem). Fails when one
+  is missing or unfit."
+  [root]
+  (into {} (for [[role icon] hub-mark-files]
+             (let [f (fs/file root icon)]
+               (when-not (fs/exists? f) (fail! (str "the hub's mark " icon " isn't there")))
+               (let [svg (str/trim (str/replace (slurp f) #"(?s)<!--.*?-->" ""))]
+                 (some->> (inline-svg-problem svg) (str "the hub's mark " icon ": ") fail!)
+                 [role svg])))))
 
 (def ^:private bag
   "A shopping bag, our own drawing, for the store button (no store's logo:
@@ -669,7 +698,7 @@
       (for [l languages]
         [:link {:rel "alternate" :hreflang (:hreflang l) :href (str (:url site) (folder languages l))}])
       [:link {:rel "alternate" :hreflang "x-default" :href (:url site)}]))
-   [:link {:rel "icon" :type "image/svg+xml" :href (data-uri (hub-mark))}]
+   [:link {:rel "icon" :type "image/svg+xml" :href (data-uri (get-in site [:mark :favicon]))}]
    [:style (h/raw style)]])
 
 (def ^:private theme-icons
@@ -722,7 +751,7 @@
     [:header.hero
      [:div.top
       [:div.brand
-       [:span.mark {:aria-hidden "true"} (h/raw (hub-mark))]
+       [:span.mark {:aria-hidden "true"} (h/raw (get-in site [:mark :header]))]
        [:div
         [:p.eyebrow "Clogem"]
         [:h1 (:heading ui)]]]
@@ -994,9 +1023,10 @@
 
 (defn load-site
   "site.edn from `config` and its translations from `i18n`, checked; the
-  apps published in `site-dir` (all of them without one) and the projects
-  with their icons from `root`. {:site :languages :sites}: `sites` is the
-  site in each language's words, by :id."
+  apps published in `site-dir` (all of them without one), the projects with
+  their icons from `root`, and the hub's own mark from `root` (:mark).
+  {:site :languages :sites}: `sites` is the site in each language's words,
+  by :id."
   [{:keys [config i18n site-dir root]}]
   (let [site   (edn/read-string (slurp config))
         _      (when-let [problems (seq (check-site site))]
@@ -1011,7 +1041,8 @@
         projects (project-icons (get-in site [:open-source :projects]) (or root "."))
         apps   (vec (published-apps (:apps site) site-dir languages))
         _      (when (empty? apps) (fail! "No app is published yet: nothing to list."))
-        listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects))]
+        listed (-> site (assoc :apps apps) (assoc-in [:open-source :projects] projects)
+                   (assoc :mark (hub-mark (or root "."))))]
     {:site listed
      :languages languages
      :sites (into {(:id (first languages)) listed}
